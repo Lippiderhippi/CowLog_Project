@@ -11,10 +11,12 @@ library(broom)
 
 clflag(pathtofile = "E:/Balkan 2022/Alarm Cue/Data sheets")
 
-cldata(pathtofile = "E:/Balkan 2022/Alarm Cue/Data sheets",
+summary_df = cldata(pathtofile = "E:/Balkan 2022/Alarm Cue/Data sheets",
        outputdataname = "dataframe_round",
        outputzonename = "list_of_zones",
        factor = T, factorindex = 2, factorname = "Motu")
+
+write.csv(summary_df, "summary_df.csv")
 
 clseries(pathtofile = "E:/Balkan 2022/Alarm Cue/Data sheets",
          zonename = list_of_zones,
@@ -26,3 +28,4 @@ clpie(dataname = dataframe_round, zonename = list_of_zones, factor = F)
 clboxplot(dataname = dataframe_round, factor = T, factorname = "Motu")
 
 clreg(data = dataframe_round, zonename = list_of_zones, factor = T, factorname = "Motu")
+
