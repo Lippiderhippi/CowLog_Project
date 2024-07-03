@@ -47,6 +47,8 @@ summary(normal_model2)
 coeftest(normal_model2, vcov=vcovHC(normal_model2, type=c("HC3")))
 plot(normal_model2, which = 1)
 
+
+
 # Outlier Plots #
 ols_plot_resid_lev(normal_model1) #only works with 'lm'-function-model
 ols_plot_resid_lev(normal_model2) #only works with 'lm'-function-model
@@ -56,11 +58,22 @@ robust_model1 <- lmrob(Diff_PostPre ~ Pre + Treat, data = df_exp1)
 summary(robust_model1)
 par(mfrow = c(2, 2))
 plot(robust_model1)
+# Adjusting parameters in the lmrob function
+robust_model1_KS2011 <- lmrob(Diff_PostPre ~ Pre + Treat, data = df_exp1, setting = "KS2011")
+summary(robust_model1_KS2011)
+robust_model1_KS2014 <- lmrob(Diff_PostPre ~ Pre + Treat, data = df_exp1, setting = "KS2014")
+summary(robust_model1_KS2014)
 #
 robust_model2 <- lmrob(Diff_PostPre ~ Pre + Treat, data = df_exp2)
 summary(robust_model2)
 par(mfrow = c(2, 2))
 plot(robust_model2)
+# Adjusting parameters in the lmrob function 
+robust_model2_KS2011 <- lmrob(Diff_PostPre ~ Pre + Treat, data = df_exp2, setting = "KS2011")
+summary(robust_model2_KS2011)
+robust_model2_KS2014 <- lmrob(Diff_PostPre ~ Pre + Treat, data = df_exp2, setting = "KS2014")
+summary(robust_model2_KS2014)
+
 #
 robust_post_hoc1 <- glht(robust_model1, linfct = mcp(Treat = "Tukey"))
 summary(robust_post_hoc1)

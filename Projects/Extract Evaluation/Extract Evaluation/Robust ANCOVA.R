@@ -3,6 +3,7 @@
 # Install the necessary package if you haven't already
 install.packages("WRS2")
 
+
 # Load the package
 library(WRS2)
 library(tidyverse)
@@ -28,6 +29,10 @@ df_exp2 <- filter(df_noNA, Filter_2 == 2)     #"less" elegant
 # "$" is used to refere to access/refere to a specific column within df
 df_exp1$Treat <- relevel(factor(df_exp1$Treat), ref = "C1")
 df_exp2$Treat <- relevel(factor(df_exp2$Treat), ref = "C2")
+
+#Ancova
+ancova1 <- aov(Diff_PostPre ~ Treat + Pre, data = df_exp1)
+summary(ancova1)
 
 # Perform robust ANCOVA
 robust_ancova <- rmanova(Diff_PostPre ~ Treat + Pre, groups = df_exp1$Treat, data = df_exp1)
