@@ -1,4 +1,4 @@
-### GLMM - Rana temporaria ###
+### GLMM - Bufo bufo ###
 
 # This R script is designed to analyze tadpole response behavior using a Generalized Linear Mixed Model (GLMM) with a zero-inflated gamma distribution. 
 # The zero-inflated gamma distribution is used to account for the excess zeros in the data and the continuous nature of the non-zero responses.
@@ -28,7 +28,7 @@ pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa)
 # ### 1. Load the data #### ------------------------------------------------
 
 
-df_L <- read.csv("C:/Users/Konrad Lipkowski/Desktop/GitHub/ExtractEvaluation/0. Extract Evaluation_All Rana_v3_L.csv")
+df_L <- read.csv("C:/Users/Konrad Lipkowski/Desktop/GitHub/ExtractEvaluation/0. Extract Evaluation_All Bufo_v3_L.csv")
 
 
 

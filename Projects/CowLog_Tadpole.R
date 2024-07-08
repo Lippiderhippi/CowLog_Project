@@ -4,7 +4,7 @@ install_github("kellyjwallace/cowlogdata")
 install.packages("doBy")
 install.packages("plyr")
 
-#### Cow Log script starts ####
+
 #### Load the library packages first #### 
 
 library(cowlogdata)
@@ -17,19 +17,22 @@ library(broom)
 
 library(doBy)
 
-######## "clflag" - Screening Data-tables  For Invalid Datapoints ########
 
-    # "clflag" will scan data-tables for invalid datapoints and the respective row in which the invalid datapoint occures.
-    # Example: [1] "18-EA_Trea(xRS)Pre.csv WARNING: LESS THAN THREE ENTRIES"
+#### Screen Data Tables  #### --------
+
+# "clflag" will scan data-tables for invalid data points.
+# invalid timestamps will be reported and the respective row in which the invalid data point occurs.
+# Example: [1] "18-EA_Trea(xRS)Pre.csv WARNING: LESS THAN THREE ENTRIES"
 
 clflag(pathtofile = "C:/Users/Konrad Lipkowski/Desktop/Cowlog-Data Extraction")
 
-# correct invalid datapoints and rerun "clflag" to check again if changes were applied. 
-# Note: Depending on your usecase the error: "WARNING: LESS THAN THREE ENTRIES" can be ignored.  
+# correct the invalid data points in the table and rerun "clflag" to check again if changes were applied. 
+# Note: Depending on your use case the error: "WARNING: LESS THAN THREE ENTRIES" can be ignored.  
 # When everything is correct proceed with extracting activity-data.
 
 
-######## Behaviour Data Extraction ########
+
+#### Behaviour Data Extraction #### --------------------------------------
 
 summary_df = cldata(pathtofile = "C:/Users/Konrad Lipkowski/Desktop/Cowlog-Data Extraction",
        outputdataname = "dataframe_round",
@@ -38,16 +41,17 @@ summary_df = cldata(pathtofile = "C:/Users/Konrad Lipkowski/Desktop/Cowlog-Data 
 
 write.csv(summary_df, "summary_df.csv")   # creates a data-table with calculated activity-data as a.csv.
 View(summary_df)                          # to check if table and data is structured correctly.
+str(summary_df)                           # to ckeck if the variables are coded correctly
 
-########"clseries" - Visualizing toal time spend ########
+#### Visualizing total time spend #### ----------------------
+# clseries calculates and visualizes the total time spend in each "zone" or "status" by subtracting time stamps
+# clseries visualizes time spend in 10 time segments with (x=seglenght) seconds each
 
 clseries(pathtofile = "C:/Users/Konrad Lipkowski/Desktop/Cowlog-Data Extraction",
          zonename = list_of_zones,
          seglength = 30,
          factor = T, factorindex = 2, factorname = "Treat")
 
-# clseries calculates and visualizes the total time spend in each "zone" or "status" by subtracting time stamps
-# clseries visualizes time spend in 10 time segments with (x=seglenght) seconds each
 
 
 clpie(dataname = dataframe_round, zonename = list_of_zones, factor = F)
@@ -58,7 +62,9 @@ clreg(data = dataframe_round, zonename = list_of_zones, factor = T, factorname =
 
 
 
-######## Simple Descriptive Across All Factors ########
+
+# #### Simple Descriptive Across All Factors #### -------------------------
+
 
 # first loads your data into the working memory of R from your summary.csv into a dataframe.
 
@@ -79,7 +85,8 @@ summary(df[c("Active_seconds","Resting_seconds")]) # summary of "specific variab
 
 
 
-######## Simple Descriptive Of One Variable by one specific Factor ########
+
+# #### Simple Descriptive Of One Variable by one specific Factor # --------
 
 cdata <- ddply(df, c("Treat"), summarise,
                N    = length(Active_seconds),
@@ -137,3 +144,36 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
 }
 
 summarySE(df, measurevar= "Active_seconds", groupvars=c("Treat"), na.rm=TRUE)
+
+
+
+
+
+# #### Einfache Statistic #### --------------------------------------------
+
+
+
+# Installiere das Paket "psych" falls noch nicht installiert
+install.packages("psych")
+
+# Lade das Paket "psych"
+library(psych)
+
+# Lade die CSV-Datei in ein dataframe. Die Datei muss im "CowLog R-Project" Ordner sein.
+df <- read.csv("RT-I-summary_df_v2.csv")
+View(df)
+
+# Berechne die Statistiken nach einer Gruppe (hier am Beispiel der Spalte "Gruppe")
+stats_by_group <- describeBy(df[, c("Active_seconds", "Active_entries", "Active_prop")], group = df$Treat, mat = TRUE)
+
+# Gib die berechneten Statistiken aus
+stats_by_group
+View(stats_by_group)
+write.csv(stats_by_group, file = "output.csv", row.names = TRUE)
+
+# Subtrahiere die Aktivitätswerte zwischen Gruppen
+diff_by_group <- with(df, tapply(Active_seconds, Treat, function(x) x - x[1]))
+
+# Output anzeigen
+print(diff_by_group)
+View(diff_by_group)
