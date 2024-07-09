@@ -84,6 +84,8 @@ filtered_df_Rana_L$Combined_Treatment <- ifelse(data$Treatment %in% c("boiled", 
 # ### 2.3 Split up the data #### ------------------------------------------
 df_Rana_exp1 <- filter(filtered_df_Rana_L, Filter_1 == 1)
 df_Rana_exp2 <- filter(filtered_df_Rana_L, Filter_1 == 2)
+df_Rana_exp1_1 <- filter(filtered_df_Rana_L, Filter_1_1 == 1)
+df_Rana_exp1_2 <- filter(filtered_df_Rana_L, Filter_1_2 == 1)
 # more elegant way of filtering is e.g. ===> df_Rana_exp1 <- df_Rana_exp1 %>%  filter(Filter_1 == 1)
 str(df_Rana_exp1)
 str(df_Rana_exp2)
@@ -98,6 +100,8 @@ df_Rana_exp1$Treatment_centered <- scale(df_Rana_exp1$Treatment, center = TRUE, 
 
 # ### 2.4 Re-level the data  ####  ----------------------------------------
 df_Rana_exp1$Treatment <- relevel(factor(df_Rana_exp1$Treatment), ref = "C1")
+df_Rana_exp1_1$Treatment <- relevel(factor(df_Rana_exp1_1$Treatment), ref = "C1")
+df_Rana_exp1_2$Treatment <- relevel(factor(df_Rana_exp1_2$Treatment), ref = "C1")
 df_Rana_exp2$Treatment <- relevel(factor(df_Rana_exp2$Treatment), ref = "C2")
 # This will set "C1 = Control1" as the reference treatment for any subsequent analysis
 # I do not know however if this is necessary or harmful
@@ -164,7 +168,6 @@ zigam_1_exp1_int_ziPT_Ba_ID <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 |
                                      data = df_Rana_exp1,
                                      family = ziGamma(link = "log"))
                                     
-
 zigam_2_exp1_int_ziPT_ID    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
                                      ziformula = ~ Phase + Treatment,
                                      #dispformula = ~ Phase + Treatment,  # Allows for heteroscedasticity
@@ -283,6 +286,7 @@ compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, zigam
                     zigam_9_exp1_int_zi1_Ba_ID, zigam_10_exp1_int_zi1_ID, zigam_11_exp1_int_zi1_Ba, zigam_12_exp1_int_zi1,
                     zigam_13_exp1_zi1_Ba_ID, zigam_14_exp1_zi1_ID, zigam_15_exp1_zi1_Ba, zigam_16_exp1_zi1,
                     rank = T)
+
 # the following plot visualizes the performance differences
 plot(compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, zigam_3_exp1_int_ziPT_Ba, zigam_4_exp1_int_ziPT,
                          zigam_5_exp1_ziPT_Ba_ID, zigam_6_exp1_ziPT_ID, zigam_7_exp1_ziPT_Ba, zigam_8_exp1_ziPT,
@@ -316,7 +320,7 @@ plot(compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, 
 # model_performance:    ~ Lower values = Better fit
 
 # Likelihood Ratio Test
-anova(zigam_2_exp1_int_ziPT_ID,
+anova(zigam_2_exp1_int_ziPT_ID, zigam_1_exp1_int_ziPT_Ba_ID,
       zigam_6_exp1_ziPT_ID)
 #If the LRT p-value is significant, it suggests that the model with the interaction term fits the data better than the model without the interaction term.
 
@@ -439,7 +443,7 @@ summary(zigam_13_exp1_zi1_Ba_ID)
 summary(zigam_14_exp1_zi1_ID)
 summary(zigam_15_exp1_zi1_Ba)
 summary(zigam_16_exp1_zi1)
-
+summary(zigam_optimized)
 
 
 
@@ -706,3 +710,20 @@ library(performance) # package for model perfomance comparisons
 library(lme4)
 library(patchwork)
 library(DHARMa)
+
+
+zigam_optimized <- glmmTMB(
+  Active_seconds ~ Combined_Phase * Treatment + (1 | Individual_Total),
+  ziformula = ~ Phase * Treatment,
+  data = df_Rana_exp1,
+  family = ziGamma(link = "log"),
+  control = glmmTMBControl(optimizer = optim, optArgs = list(method = "BFGS"))
+)
+
+zigam_more_iter <- glmmTMB(
+  Active_seconds ~ Combined_Phase * Treatment + (1 | Individual_Total),
+  ziformula = ~ Phase * Treatment,
+  data = df_Rana_exp1,
+  family = ziGamma(link = "log"),
+  control = glmmTMBControl(optimizer = optim, optArgs = list(maxit = 10000))
+)
