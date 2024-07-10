@@ -22,7 +22,7 @@ if (!require("pacman")) install.packages("pacman")
 # p_load() from {pacman} checks to see if a package is installed.
 # If not it attempts to install the package and then loads it. 
 # It can also be applied to several packages at once (see below)
-pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa)
+pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR)
 
 
 # ### 1. Load the data #### ------------------------------------------------
@@ -37,8 +37,13 @@ str(df_Rana_L)
 
 # ### 2.1 Converting Variable to Factor #### ------------------------------
 # Here I needed to convert Phase to a factor
-df_Rana_L$Phase <- factor(df_Rana_L$Phase, levels = c(1, 2, 3), labels = c("Pre", "Stim", "Post"))
-levels(df_Rana_L$Phase)
+df_Rana_L$Phase <- factor(df_Rana_L$Phase, levels = c(1, 2, 3), labels = c("Pre", "Stim", "Post"), ordered = TRUE)
+str(df_Rana_L)
+
+# Convert the ordered factor to numeric
+df_Rana_L$Phase_numeric <- as.numeric(df_Rana_L$Phase)
+str(df_Rana_L)
+
 # this changes the variable type from whatever it is to a factor and relabels them as "1", "2" etc.
 # I did this because "phase" as "int" caused a problem during the analysis not recognizing "phase" as an ordinal variable
 str(df_Rana_L)
@@ -283,8 +288,8 @@ Sys.setlocale("LC_ALL", "C")
 # you should still look at AIC and BIC values and consider models that do not perform the best if applicable for good reasons
 compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, zigam_3_exp1_int_ziPT_Ba, zigam_4_exp1_int_ziPT,
                     zigam_5_exp1_ziPT_Ba_ID, zigam_6_exp1_ziPT_ID, zigam_7_exp1_ziPT_Ba, zigam_8_exp1_ziPT,
-                    zigam_9_exp1_int_zi1_Ba_ID, zigam_10_exp1_int_zi1_ID, zigam_11_exp1_int_zi1_Ba, zigam_12_exp1_int_zi1,
-                    zigam_13_exp1_zi1_Ba_ID, zigam_14_exp1_zi1_ID, zigam_15_exp1_zi1_Ba, zigam_16_exp1_zi1,
+                    #zigam_9_exp1_int_zi1_Ba_ID, zigam_10_exp1_int_zi1_ID, zigam_11_exp1_int_zi1_Ba, zigam_12_exp1_int_zi1,
+                    #zigam_13_exp1_zi1_Ba_ID, zigam_14_exp1_zi1_ID, zigam_15_exp1_zi1_Ba, zigam_16_exp1_zi1,
                     rank = T)
 
 # the following plot visualizes the performance differences
@@ -320,7 +325,7 @@ plot(compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, 
 # model_performance:    ~ Lower values = Better fit
 
 # Likelihood Ratio Test
-anova(zigam_2_exp1_int_ziPT_ID, zigam_1_exp1_int_ziPT_Ba_ID,
+anova(zigam_2_exp1_int_ziPT_ID,
       zigam_6_exp1_ziPT_ID)
 #If the LRT p-value is significant, it suggests that the model with the interaction term fits the data better than the model without the interaction term.
 
@@ -364,9 +369,9 @@ model_performance(zigam_16_exp1_zi1)
 # ICC: Measures the proportion of total variance that is attributable to the grouping structure in the data (i.e., variance explained by the random effects).
 # ICC: Higher ICC values indicate that a larger proportion of the total variance is due to differences between groups.
 
-# RMSE: The square root of the average squared differences between observed and predicted values. 
-
+# RMSE: The square root of the average squared differences between observed and predicted values.
 # RMSE: Lower RMSE values indicate a better fit, as they suggest that the model's predictions are close to the observed data.
+
 # Sigma: The standard deviation of the residuals (errors) of the model.
 # Sigma: Lower sigma values indicate that the residuals are smaller, which means the model fits the data better.
 
@@ -712,18 +717,38 @@ library(patchwork)
 library(DHARMa)
 
 
-zigam_optimized <- glmmTMB(
-  Active_seconds ~ Combined_Phase * Treatment + (1 | Individual_Total),
-  ziformula = ~ Phase * Treatment,
+BFGS_glmm <- glmmTMB(
+  Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+  ziformula = ~ Phase + Treatment,
   data = df_Rana_exp1,
   family = ziGamma(link = "log"),
-  control = glmmTMBControl(optimizer = optim, optArgs = list(method = "BFGS"))
-)
+  control = glmmTMBControl(optimizer = optim, optArgs = list(method = "BFGS")))
+
+L_BFGS_B_glmm <- glmmTMB(
+  Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+  ziformula = ~ Phase + Treatment,
+  data = df_Rana_exp1,
+  family = ziGamma(link = "log"),
+  control = glmmTMBControl(optimizer = optim, optArgs = list(method = "L-BFGS-B")))
+
+CG_glmm <- glmmTMB(
+  Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+  ziformula = ~ Phase + Treatment,
+  data = df_Rana_exp1,
+  family = ziGamma(link = "log"),
+  control = glmmTMBControl(optimizer = optim, optArgs = list(method = "CG")))
+
+
+
 
 zigam_more_iter <- glmmTMB(
-  Active_seconds ~ Combined_Phase * Treatment + (1 | Individual_Total),
-  ziformula = ~ Phase * Treatment,
+  Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+  ziformula = ~ Phase + Treatment,
   data = df_Rana_exp1,
   family = ziGamma(link = "log"),
-  control = glmmTMBControl(optimizer = optim, optArgs = list(maxit = 10000))
+  control = glmmTMBControl(optimizer = optim, optArgs = list(maxit = 1000000))
 )
+
+check_model(optimized_glmm)
+summary(optimized_glmm)
+check_model(zigam_more_iter)
