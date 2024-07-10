@@ -111,8 +111,10 @@ df_Rana_exp2$Treatment <- relevel(factor(df_Rana_exp2$Treatment), ref = "C2")
 # This will set "C1 = Control1" as the reference treatment for any subsequent analysis
 # I do not know however if this is necessary or harmful
 # It seemed to be reasonable from what the outcome is when using this
-levels(df_Rana_exp1$Treatment) 
+levels(df_Rana_exp1$Treatment)
+levels(df_Rana_exp1$Phase)
 levels(df_Rana_exp2$Treatment) 
+levels(df_Rana_exp2$Phase)
 # Check if the desired reference treatment is at first place. That is important for subsequent analysis.
 # The other treatments can be in any order. R seems to order them according to values and then letters.
 str(df_Rana_exp1)
@@ -174,7 +176,7 @@ zigam_1_exp1_int_ziPT_Ba_ID <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 |
                                      family = ziGamma(link = "log"))
                                     
 zigam_2_exp1_int_ziPT_ID    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment,
+                                     ziformula = ~ Phase + Treatment + (1 | Individual_Total),
                                      #dispformula = ~ Phase + Treatment,  # Allows for heteroscedasticity
                                      data = df_Rana_exp1,
                                      family = ziGamma(link = "log"))
@@ -200,8 +202,7 @@ zigam_5_exp1_ziPT_Ba_ID     <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 |
                                      family = ziGamma(link = "log"))
 
 zigam_6_exp1_ziPT_ID        <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment,
-                                     #dispformula = ~ Phase + Treatment,  # Allows for heteroscedasticity
+                                     ziformula = ~ Phase + Treatment + (1 | Individual_Total),
                                      data = df_Rana_exp1,
                                      family = ziGamma(link = "log"))
 
