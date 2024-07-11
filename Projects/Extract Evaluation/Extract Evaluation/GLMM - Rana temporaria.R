@@ -27,7 +27,7 @@ pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa, 
 
 # ### 1. Load the data #### ------------------------------------------------
 
-df_Rana_L <- read.csv("C:/Users/Konrad Lipkowski/Desktop/GitHub/CowLog_Project/Projects/Extract Evaluation/Extract Evaluation/0. Extract Evaluation_All Rana_v3_L.csv")
+df_Rana_L <- read.csv("0. Extract Evaluation_All Rana_v3_L.csv")
 
 # ### 2. Data Structure & Modifications #### ---------------------------------------
 # The respective Variables should have the proper type e.g. int (whole numbers), chr (string), num (continuous)
@@ -38,6 +38,7 @@ str(df_Rana_L)
 # ### 2.1 Converting Variable to Factor #### ------------------------------
 # Here I needed to convert Phase to a factor
 df_Rana_L$Phase <- factor(df_Rana_L$Phase, levels = c(1, 2, 3), labels = c("Pre", "Stim", "Post"), ordered = TRUE)
+df_Rana_L$Phase <- factor(df_Rana_L$Phase, levels = c(1, 2, 3), labels = c("Pre", "Stim", "Post"))
 str(df_Rana_L)
 
 # Convert the ordered factor to numeric
@@ -158,28 +159,31 @@ install.packages("glmmTMB")
 # "ziformula = ~ 1" = assumes the probability of "zeros" being the same across all factors
 # Since however the probability of "zeros" is expected to be different in respect to the Phase and Treatments this argument has to be changed
 # "ziformula = ~ Phase + Treatment" This specifies a zero-inflation model where the probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors.
+# "dispformula = ~ Phase * Treatment" 
+
+# These p-values are relatively high, indicating that these specific interaction terms are not statistically significant at conventional levels (like 0.05). This suggests that the interaction between Phase and Treatment levels does not significantly contribute to explaining the variation in the dispersion of Active_seconds.
 
 # Note: When including (1 | Individual_Total) this tells the model to allow each subject to have their own baseline level of the dependent variable (e.g., seconds). 
 # Note: This random intercept varies for each subject, capturing the idea that measurements within the same subject are more similar to each other than to measurements from other subjects.
 
-
+# ?Generally? # If the majority of interaction terms are not statistically significant (have p-values > 0.05), it suggests that including these interactions in your dispersion model may not be justified.
 
 # ### 3.1.1 Modelling                   - Experiment 1 #### -----------------
 
 ### 1st Models ###
 # Models I think, are appropriate #
 # probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
-zigam_1_exp1_int_ziPT_Ba_ID <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Batch) + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment,
-                                     #dispformula = ~ Phase + Treatment,  # Allows for heteroscedasticity
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+zigam_1_exp1_int_ziPT_Ba_ID <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+                                        dispformula = ~ Phase * Treatment,  # Allows for heteroscedasticity
+                                          ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
                                     
-zigam_2_exp1_int_ziPT_ID    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment + (1 | Individual_Total),
-                                     #dispformula = ~ Phase + Treatment,  # Allows for heteroscedasticity
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+zigam_2_exp1_int_ziPT_ID    <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
+                                        dispformula = ~ Treatment,  # Allows for heteroscedasticity
+                                          ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 zigam_3_exp1_int_ziPT_Ba    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Batch),
                                      ziformula = ~ Phase + Treatment,
@@ -452,6 +456,16 @@ summary(zigam_16_exp1_zi1)
 summary(zigam_optimized)
 
 
+# ### Heteroscedasticity checks ###  --------------------------------------
+
+# DHARMa residuals
+plot(s1 <- simulateResiduals(zigam_1_exp1_int_ziPT_Ba_ID))
+par(mfrow=c(1,2))
+plotResiduals(s1, df_Rana_exp1$Phase, rank = FALSE)
+plotResiduals(s1, df_Rana_exp1$Treatment, rank  = FALSE)
+# under H0 (perfect model), we would expect those boxes to range homogenously from 0.25-0.75. 
+# To see whether there are deviations from this expecation, the plot calculates a test for uniformity per box, and a test for homgeneity of variances between boxes. 
+# A positive test will be highlighted in red.
 
 
 
