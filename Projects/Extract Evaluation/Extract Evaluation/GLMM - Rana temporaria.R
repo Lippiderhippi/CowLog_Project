@@ -15,6 +15,7 @@
 # patchwork   = For combining multiple ggplot2 plots into a single cohesive layout
 # DHARMa      = For residual diagnostics for hierarchical (multi-level/mixed) regression models
 # lme4        = 
+# FactoMineR  = 
 
 # the following package "Pacman" is for package management and makes checking, installing and loading of packages more efficient.
 if (!require("pacman")) install.packages("pacman")
@@ -38,7 +39,7 @@ str(df_Rana_L)
 # ### 2.1 Converting Variable to Factor #### ------------------------------
 # Here I needed to convert Phase to a factor
 df_Rana_L$Phase <- factor(df_Rana_L$Phase, levels = c(1, 2, 3), labels = c("Pre", "Stim", "Post"), ordered = TRUE)
-df_Rana_L$Phase <- factor(df_Rana_L$Phase, levels = c(1, 2, 3), labels = c("Pre", "Stim", "Post"))
+#df_Rana_L$Phase <- factor(df_Rana_L$Phase, levels = c(1, 2, 3), labels = c("Pre", "Stim", "Post"))
 str(df_Rana_L)
 
 # Convert the ordered factor to numeric
@@ -61,14 +62,14 @@ filtered_df_Rana_L <- df_Rana_L %>%
 # this excludes all individuals that were inactive in all phases 
 str(filtered_df_Rana_L)
 
-# This excludes all data for Phase "Stim" or any other
-filtered_df_Rana_L <- filtered_df_Rana_L %>%
-  filter(Phase != "Stim")
-# This excludes all data for Phase "Post" or any other
-filtered_df_Rana_L <- filtered_df_Rana_L %>%
-  filter(Phase != "Post")
+### Exluding certain Phases or Treatments ###
 
-# Combine Variables to reduce collinearity - Phases
+# This excludes all data for Phase "Stim" or any other
+filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Phase != "Stim")
+# This excludes all data for Phase "Post" or any other
+filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Phase != "Post")
+
+#### Combine Variables to reduce collinearity - Phases ###
 filtered_df_Rana_L$Combined_Phase <- ifelse(filtered_df_Rana_L$Phase %in% c("Stim", "Post"), "Stim_Post", "Pre")
 # Combine Variables to reduce collinearity - Treatments
 filtered_df_Rana_L$Combined_Treatment <- ifelse(data$Treatment %in% c("boiled", "frozen", "aged"), "processed", "unprocessed")
@@ -90,25 +91,23 @@ filtered_df_Rana_L$Combined_Treatment <- ifelse(data$Treatment %in% c("boiled", 
 # ### 2.3 Split up the data #### ------------------------------------------
 df_Rana_exp1 <- filter(filtered_df_Rana_L, Filter_1 == 1)
 df_Rana_exp2 <- filter(filtered_df_Rana_L, Filter_1 == 2)
-df_Rana_exp1_1 <- filter(filtered_df_Rana_L, Filter_1_1 == 1)
-df_Rana_exp1_2 <- filter(filtered_df_Rana_L, Filter_1_2 == 1)
+#df_Rana_exp1_1 <- filter(filtered_df_Rana_L, Filter_1_1 == 1)
+#df_Rana_exp1_2 <- filter(filtered_df_Rana_L, Filter_1_2 == 1)
 # more elegant way of filtering is e.g. ===> df_Rana_exp1 <- df_Rana_exp1 %>%  filter(Filter_1 == 1)
 str(df_Rana_exp1)
 str(df_Rana_exp2)
 
 
-# Centering Phase and Treatment to reduce collinearity
-df_Rana_exp1$Phase_centered <- scale(df_Rana_exp1$Phase, center = TRUE, scale = FALSE)
-df_Rana_exp1$Treatment_centered <- scale(df_Rana_exp1$Treatment, center = TRUE, scale = FALSE)
-
-
+#### Centering Phase and Treatment to reduce collinearity ###
+#df_Rana_exp1$Phase_centered <- scale(df_Rana_exp1$Phase, center = TRUE, scale = FALSE)
+#df_Rana_exp1$Treatment_centered <- scale(df_Rana_exp1$Treatment, center = TRUE, scale = FALSE)
 
 
 # ### 2.4 Re-level the data  ####  ----------------------------------------
 df_Rana_exp1$Treatment <- relevel(factor(df_Rana_exp1$Treatment), ref = "C1")
-df_Rana_exp1_1$Treatment <- relevel(factor(df_Rana_exp1_1$Treatment), ref = "C1")
-df_Rana_exp1_2$Treatment <- relevel(factor(df_Rana_exp1_2$Treatment), ref = "C1")
 df_Rana_exp2$Treatment <- relevel(factor(df_Rana_exp2$Treatment), ref = "C2")
+#df_Rana_exp1_1$Treatment <- relevel(factor(df_Rana_exp1_1$Treatment), ref = "C1")
+#df_Rana_exp1_2$Treatment <- relevel(factor(df_Rana_exp1_2$Treatment), ref = "C1")
 # This will set "C1 = Control1" as the reference treatment for any subsequent analysis
 # I do not know however if this is necessary or harmful
 # It seemed to be reasonable from what the outcome is when using this
@@ -150,7 +149,7 @@ library(glmmTMB)
 install.packages("glmmTMB") 
 
 # Example Models with using glmmTMB #
-#1 glmmTMB_lognormal  <- glmmTMB(Active_seconds ~ Phase * Treatment, data = df_Rana_L, family = lognormal(link = "log"))
+#1 glmmTMB_lognormal  <- glmmTMB(Active_seconds ~ Phase * Treatment, family = lognormal(link = "log"),data = df_Rana_L)
 #2 glmmTMB_Gamma      <- glmmTMB(Active_seconds ~ Phase * Treatment, data = df_Rana_L, family = Gamma(link = "log"))
 #3 glmmTMB_ziGamma    <- glmmTMB(Active_seconds ~ Phase + Treatment, ziformula = ~ 1, data = df_Rana_exp1, family = ziGamma(link = "log"))
 
@@ -168,57 +167,60 @@ install.packages("glmmTMB")
 
 # ?Generally? # If the majority of interaction terms are not statistically significant (have p-values > 0.05), it suggests that including these interactions in your dispersion model may not be justified.
 
+
+
+
 # ### 3.1.1 Modelling                   - Experiment 1 #### -----------------
 
-### 1st Models ###
+### 1st initial Models ###
 # Models I think, are appropriate #
 # probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
-zigam_1_exp1_int_ziPT_Ba_ID <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
-                                        dispformula = ~ Phase * Treatment,  # Allows for heteroscedasticity
-                                          ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+
+zigam_1_exp1_int_ziPT_Ba_ID <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total) + (1 | Batch),
+                                          ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
                                           data = df_Rana_exp1,
                                           family = ziGamma(link = "log"))
                                     
-zigam_2_exp1_int_ziPT_ID    <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
-                                        dispformula = ~ Treatment,  # Allows for heteroscedasticity
+zigam_2_exp1_int_ziPT_ID    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
                                           ziformula = ~ Phase + Treatment + (1 | Individual_Total),
                                           data = df_Rana_exp1,
                                           family = ziGamma(link = "log"))
 
 zigam_3_exp1_int_ziPT_Ba    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Batch),
-                                     ziformula = ~ Phase + Treatment,
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                          ziformula = ~ Phase + Treatment + (1 | Batch),
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 zigam_4_exp1_int_ziPT       <- glmmTMB(Active_seconds ~ Phase * Treatment,
-                                     ziformula = ~ Phase + Treatment,
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                          ziformula = ~ Phase + Treatment,
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 
 ### 2nd Models ###
 # Models I think, could be appropriate #
 # probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
 # No interaction between Phase and Treatment #
+
 zigam_5_exp1_ziPT_Ba_ID     <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Batch) + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment,
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                          ziformula = ~ Phase + Treatment + (1 | Batch) + (1 | Individual_Total),
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 zigam_6_exp1_ziPT_ID        <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment + (1 | Individual_Total),
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                          ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 zigam_7_exp1_ziPT_Ba        <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Batch),
-                                     ziformula = ~ Phase + Treatment,
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                          ziformula = ~ Phase + Treatment + (1 | Batch),
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 zigam_8_exp1_ziPT           <- glmmTMB(Active_seconds ~ Phase + Treatment,
-                                     ziformula = ~ Phase + Treatment,
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                          ziformula = ~ Phase + Treatment,
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 
 ### 3rd Models ###
@@ -226,24 +228,24 @@ zigam_8_exp1_ziPT           <- glmmTMB(Active_seconds ~ Phase + Treatment,
 # probability of zeros (Active_seconds == 0) is the same across Phase and Treatment as predictors #
 
 zigam_9_exp1_int_zi1_Ba_ID    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Batch) + (1 | Individual_Total),
-                                       ziformula = ~ 1,
-                                       data = df_Rana_exp1,
-                                       family = ziGamma(link = "log"))
+                                          ziformula = ~ 1,
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 zigam_10_exp1_int_zi1_ID       <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
-                                       ziformula = ~ 1,
-                                       data = df_Rana_exp1,
-                                       family = ziGamma(link = "log"))
+                                          ziformula = ~ 1,
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 zigam_11_exp1_int_zi1_Ba       <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Batch),
-                                       ziformula = ~ 1,
-                                       data = df_Rana_exp1,
-                                       family = ziGamma(link = "log"))
+                                          ziformula = ~ 1,
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 zigam_12_exp1_int_zi1          <- glmmTMB(Active_seconds ~ Phase * Treatment,
-                                       ziformula = ~ 1,
-                                       data = df_Rana_exp1,
-                                       family = ziGamma(link = "log"))
+                                          ziformula = ~ 1,
+                                          data = df_Rana_exp1,
+                                          family = ziGamma(link = "log"))
 
 
 ### 4th Models ###
@@ -252,25 +254,101 @@ zigam_12_exp1_int_zi1          <- glmmTMB(Active_seconds ~ Phase * Treatment,
 # No interaction between Phase and Treatment #
 
 zigam_13_exp1_zi1_Ba_ID      <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Batch) + (1 | Individual_Total),
-                                     ziformula = ~ 1,
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                        ziformula = ~ 1,
+                                        data = df_Rana_exp1,
+                                        family = ziGamma(link = "log"))
 
 zigam_14_exp1_zi1_ID         <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
-                                     ziformula = ~ 1,
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                        ziformula = ~ 1,
+                                        data = df_Rana_exp1,
+                                        family = ziGamma(link = "log"))
 
 zigam_15_exp1_zi1_Ba         <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Batch),
-                                     ziformula = ~ 1,
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                        ziformula = ~ 1,
+                                        data = df_Rana_exp1,
+                                        family = ziGamma(link = "log"))
 
 zigam_16_exp1_zi1            <- glmmTMB(Active_seconds ~ Phase + Treatment,
-                                     ziformula = ~ 1,
-                                     data = df_Rana_exp1,
-                                     family = ziGamma(link = "log"))
+                                        ziformula = ~ 1,
+                                        data = df_Rana_exp1,
+                                        family = ziGamma(link = "log"))
 
+### 5th Models ###
+# Models I think, are most appropriate #
+# probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
+# Models that account for Heteroscedasticity #
+
+zigam_17_exp1_int_mdisPT_ziPT_Ba_ID      <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                    dispformula = ~ Phase * Treatment,
+                                                      ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+ 
+zigam_18_exp1_int_mdisPT_ziPT_ID         <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+                                                    dispformula = ~ Phase * Treatment,
+                                                      ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_19_exp1_int_mdisPT_ziPT            <- glmmTMB(Active_seconds ~ Phase * Treatment,
+                                                    dispformula = ~ Phase * Treatment,
+                                                      ziformula = ~ Phase + Treatment,
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_20_exp1_int_adisPT_ziPT_Ba_ID      <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                    dispformula = ~ Phase + Treatment,
+                                                      ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_21_exp1_int_adisPT_ziPT_ID         <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+                                                    dispformula = ~ Phase + Treatment,
+                                                      ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_22_exp1_int_adisPT_ziPT            <- glmmTMB(Active_seconds ~ Phase * Treatment,
+                                                    dispformula = ~ Phase + Treatment,
+                                                      ziformula = ~ Phase + Treatment,
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_23_exp1_mdisPT_ziPT_Ba_ID          <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                    dispformula = ~ Phase * Treatment,
+                                                      ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_24_exp1_mdisPT_ziPT_ID             <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
+                                                    dispformula = ~ Phase * Treatment,
+                                                      ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_25_exp1_mdisPT_ziPT                <- glmmTMB(Active_seconds ~ Phase + Treatment,
+                                                    dispformula = ~ Phase * Treatment,
+                                                      ziformula = ~ Phase + Treatment,
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_26_exp1_adisPT_ziPT_Ba_ID         <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                    dispformula = ~ Phase + Treatment,
+                                                      ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_27_exp1_adisPT_ziPT_ID            <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
+                                                    dispformula = ~ Phase + Treatment,
+                                                      ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
+
+zigam_28_exp1_adisPT_ziPT               <- glmmTMB(Active_seconds ~ Phase + Treatment,
+                                                    dispformula = ~ Phase + Treatment,
+                                                      ziformula = ~ Phase + Treatment,
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp1)
 
 
 
@@ -291,17 +369,36 @@ Sys.setlocale("LC_ALL", "C")
 
 # The following command creates a table and ranks the models for the overall performance
 # you should still look at AIC and BIC values and consider models that do not perform the best if applicable for good reasons
+
+# Models initial 1st - 4th #
 compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, zigam_3_exp1_int_ziPT_Ba, zigam_4_exp1_int_ziPT,
                     zigam_5_exp1_ziPT_Ba_ID, zigam_6_exp1_ziPT_ID, zigam_7_exp1_ziPT_Ba, zigam_8_exp1_ziPT,
-                    #zigam_9_exp1_int_zi1_Ba_ID, zigam_10_exp1_int_zi1_ID, zigam_11_exp1_int_zi1_Ba, zigam_12_exp1_int_zi1,
-                    #zigam_13_exp1_zi1_Ba_ID, zigam_14_exp1_zi1_ID, zigam_15_exp1_zi1_Ba, zigam_16_exp1_zi1,
+                    zigam_9_exp1_int_zi1_Ba_ID, zigam_10_exp1_int_zi1_ID, zigam_11_exp1_int_zi1_Ba, zigam_12_exp1_int_zi1,
+                    zigam_13_exp1_zi1_Ba_ID, zigam_14_exp1_zi1_ID, zigam_15_exp1_zi1_Ba, zigam_16_exp1_zi1,
                     rank = T)
 
+# Models 5th with dispersion #
+compare_performance(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID, zigam_18_exp1_int_mdisPT_ziPT_ID, zigam_19_exp1_int_mdisPT_ziPT,
+                    zigam_20_exp1_int_adisPT_ziPT_Ba_ID, zigam_21_exp1_int_adisPT_ziPT_ID, zigam_22_exp1_int_adisPT_ziPT,
+                    zigam_23_exp1_mdisPT_ziPT_Ba_ID, zigam_24_exp1_mdisPT_ziPT_ID, zigam_25_exp1_mdisPT_ziPT,
+                    zigam_26_exp1_adisPT_ziPT_Ba_ID, zigam_27_exp1_adisPT_ziPT_ID, zigam_28_exp1_adisPT_ziPT,
+                    rank = T)
+
+
 # the following plot visualizes the performance differences
+# Models initial 1st - 4th #
 plot(compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, zigam_3_exp1_int_ziPT_Ba, zigam_4_exp1_int_ziPT,
                          zigam_5_exp1_ziPT_Ba_ID, zigam_6_exp1_ziPT_ID, zigam_7_exp1_ziPT_Ba, zigam_8_exp1_ziPT,
                          zigam_9_exp1_int_zi1_Ba_ID, zigam_10_exp1_int_zi1_ID, zigam_11_exp1_int_zi1_Ba, zigam_12_exp1_int_zi1,
                          zigam_13_exp1_zi1_Ba_ID, zigam_14_exp1_zi1_ID, zigam_15_exp1_zi1_Ba, zigam_16_exp1_zi1))
+
+# Models 5th with dispersion #
+plot(compare_performance(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID, zigam_18_exp1_int_mdisPT_ziPT_ID, zigam_19_exp1_int_mdisPT_ziPT,
+                         zigam_20_exp1_int_adisPT_ziPT_Ba_ID, zigam_21_exp1_int_adisPT_ziPT_ID, zigam_22_exp1_int_adisPT_ziPT,
+                         zigam_23_exp1_mdisPT_ziPT_Ba_ID, zigam_24_exp1_mdisPT_ziPT_ID, zigam_25_exp1_mdisPT_ziPT,
+                         zigam_26_exp1_adisPT_ziPT_Ba_ID, zigam_27_exp1_adisPT_ziPT_ID, zigam_28_exp1_adisPT_ziPT))
+
+
 
 # values in the center of the spider web plot indicate low performance while values on the edge reflect high performance
 # some models might be good in some values but not other (e.g. over fitted models could have a high BIC  but low AIC)
@@ -332,9 +429,11 @@ plot(compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, 
 # Likelihood Ratio Test
 anova(zigam_2_exp1_int_ziPT_ID,
       zigam_6_exp1_ziPT_ID)
-#If the LRT p-value is significant, it suggests that the model with the interaction term fits the data better than the model without the interaction term.
+
+# If the LRT p-value is significant, it suggests that the model with the interaction term fits the data better than the model without the interaction term.
 
 # ### 3.3.1 Model Performance Indices   - Experiment 1 #### -----------------
+
 ### 1st Models ###
 model_performance(zigam_1_exp1_int_ziPT_Ba_ID)
 model_performance(zigam_2_exp1_int_ziPT_ID)
@@ -358,6 +457,20 @@ model_performance(zigam_13_exp1_zi1_Ba_ID)
 model_performance(zigam_14_exp1_zi1_ID)
 model_performance(zigam_15_exp1_zi1_Ba)
 model_performance(zigam_16_exp1_zi1)
+
+### 5th Models ###
+model_performance(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID)
+model_performance(zigam_18_exp1_int_mdisPT_ziPT_ID)
+model_performance(zigam_19_exp1_int_mdisPT_ziPT)
+model_performance(zigam_20_exp1_int_adisPT_ziPT_Ba_ID)
+model_performance(zigam_21_exp1_int_adisPT_ziPT_ID)
+model_performance(zigam_22_exp1_int_adisPT_ziPT)
+model_performance(zigam_23_exp1_mdisPT_ziPT_Ba_ID)
+model_performance(zigam_24_exp1_mdisPT_ziPT_ID)
+model_performance(zigam_25_exp1_mdisPT_ziPT)
+model_performance(zigam_26_exp1_adisPT_ziPT_Ba_ID)
+model_performance(zigam_27_exp1_adisPT_ziPT_ID)
+model_performance(zigam_28_exp1_adisPT_ziPT)
 
 # AIC: Relative quality of a statistical model. Lower AIC values indicate a better model
 
@@ -409,6 +522,20 @@ check_model(zigam_14_exp1_zi1_ID)
 check_model(zigam_15_exp1_zi1_Ba)
 check_model(zigam_16_exp1_zi1)
 
+### 5th Models ###
+check_model(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID)
+check_model(zigam_18_exp1_int_mdisPT_ziPT_ID)
+check_model(zigam_19_exp1_int_mdisPT_ziPT)
+check_model(zigam_20_exp1_int_adisPT_ziPT_Ba_ID)
+check_model(zigam_21_exp1_int_adisPT_ziPT_ID)
+check_model(zigam_22_exp1_int_adisPT_ziPT)
+check_model(zigam_23_exp1_mdisPT_ziPT_Ba_ID)
+check_model(zigam_24_exp1_mdisPT_ziPT_ID)
+check_model(zigam_25_exp1_mdisPT_ziPT)
+check_model(zigam_26_exp1_adisPT_ziPT_Ba_ID)
+check_model(zigam_27_exp1_adisPT_ziPT_ID)
+check_model(zigam_28_exp1_adisPT_ziPT)
+
 # Collinearity
 # Collinearity occurs when two or more predictor variables in a regression model are highly correlated.
 # This means they contain similar information about the variance in the outcome variable.
@@ -455,6 +582,19 @@ summary(zigam_15_exp1_zi1_Ba)
 summary(zigam_16_exp1_zi1)
 summary(zigam_optimized)
 
+### 5th Models ###
+summary(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID)
+summary(zigam_18_exp1_int_mdisPT_ziPT_ID)
+summary(zigam_19_exp1_int_mdisPT_ziPT)
+summary(zigam_20_exp1_int_adisPT_ziPT_Ba_ID)
+summary(zigam_21_exp1_int_adisPT_ziPT_ID)
+summary(zigam_22_exp1_int_adisPT_ziPT)
+summary(zigam_23_exp1_mdisPT_ziPT_Ba_ID)
+summary(zigam_24_exp1_mdisPT_ziPT_ID)
+summary(zigam_25_exp1_mdisPT_ziPT)
+summary(zigam_26_exp1_adisPT_ziPT_Ba_ID)
+summary(zigam_27_exp1_adisPT_ziPT_ID)
+summary(zigam_28_exp1_adisPT_ziPT)
 
 # ### Heteroscedasticity checks ###  --------------------------------------
 
@@ -463,8 +603,8 @@ plot(s1 <- simulateResiduals(zigam_1_exp1_int_ziPT_Ba_ID))
 par(mfrow=c(1,2))
 plotResiduals(s1, df_Rana_exp1$Phase, rank = FALSE)
 plotResiduals(s1, df_Rana_exp1$Treatment, rank  = FALSE)
-# under H0 (perfect model), we would expect those boxes to range homogenously from 0.25-0.75. 
-# To see whether there are deviations from this expecation, the plot calculates a test for uniformity per box, and a test for homgeneity of variances between boxes. 
+# under H0 (perfect model), we would expect those boxes to range homogeneously from 0.25-0.75. 
+# To see whether there are deviations from this expectation, the plot calculates a test for uniformity per box, and a test for homgeneity of variances between boxes. 
 # A positive test will be highlighted in red.
 
 
@@ -570,6 +710,84 @@ zigam_16_exp2_zi1            <- glmmTMB(Active_seconds ~ Phase + Treatment,
                                      data = df_Rana_exp2,
                                      family = ziGamma(link = "log"))
 
+### 5th Models ###
+# Models I think, are most appropriate #
+# probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
+# Models that account for Heteroscedasticity #
+
+zigam_17_exp2_int_mdisPT_ziPT_Ba_ID      <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   dispformula = ~ Phase * Treatment,
+                                                   ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_18_exp2_int_mdisPT_ziPT_ID         <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+                                                   dispformula = ~ Phase * Treatment,
+                                                   ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_19_exp2_int_mdisPT_ziPT            <- glmmTMB(Active_seconds ~ Phase * Treatment,
+                                                   dispformula = ~ Phase * Treatment,
+                                                   ziformula = ~ Phase + Treatment,
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_20_exp2_int_adisPT_ziPT_Ba_ID      <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   dispformula = ~ Phase + Treatment,
+                                                   ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_21_exp2_int_adisPT_ziPT_ID         <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+                                                   dispformula = ~ Phase + Treatment,
+                                                   ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_22_exp2_int_adisPT_ziPT            <- glmmTMB(Active_seconds ~ Phase * Treatment,
+                                                   dispformula = ~ Phase + Treatment,
+                                                   ziformula = ~ Phase + Treatment,
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_23_exp2_mdisPT_ziPT_Ba_ID          <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   dispformula = ~ Phase * Treatment,
+                                                   ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_24_exp2_mdisPT_ziPT_ID             <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
+                                                   dispformula = ~ Phase * Treatment,
+                                                   ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_25_exp2_mdisPT_ziPT                <- glmmTMB(Active_seconds ~ Phase + Treatment,
+                                                   dispformula = ~ Phase * Treatment,
+                                                   ziformula = ~ Phase + Treatment,
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_26_exp2_adisPT_ziPT_Ba_ID         <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   dispformula = ~ Phase + Treatment,
+                                                   ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_27_exp2_adisPT_ziPT_ID            <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
+                                                   dispformula = ~ Phase + Treatment,
+                                                   ziformula = ~ Phase + Treatment + (1 | Individual_Total),
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+zigam_28_exp2_adisPT_ziPT               <- glmmTMB(Active_seconds ~ Phase + Treatment,
+                                                   dispformula = ~ Phase + Treatment,
+                                                   ziformula = ~ Phase + Treatment,
+                                                   family = ziGamma(link = "log"),
+                                                   data = df_Rana_exp2)
+
+
 # ### 3.2.2 Compare Model Performance   - Experiment 2 #### -----------------
 
 # Troubleshooting #
@@ -580,17 +798,34 @@ Sys.setlocale("LC_ALL", "C")
 
 # The following command creates a table and ranks the models for the overall performance
 # you should still look at AIC and BIC values and consider models that do not perform the best if applicable for good reasons
+# Models initial 1st - 4th #
 compare_performance(zigam_1_exp2_int_ziPT_Ba_ID, zigam_2_exp2_int_ziPT_ID, zigam_3_exp2_int_ziPT_Ba, zigam_4_exp2_int_ziPT,
                     zigam_5_exp2_ziPT_Ba_ID, zigam_6_exp2_ziPT_ID, zigam_7_exp2_ziPT_Ba, zigam_8_exp2_ziPT,
                     zigam_9_exp2_int_zi1_Ba_ID, zigam_10_exp2_int_zi1_ID, zigam_11_exp2_int_zi1_Ba, zigam_12_exp2_int_zi1,
                     zigam_13_exp2_zi1_Ba_ID, zigam_14_exp2_zi1_ID, zigam_15_exp2_zi1_Ba, zigam_16_exp2_zi1,
                     rank = T)
 
+# Models 5th with dispersion #
+compare_performance(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID, zigam_18_exp2_int_mdisPT_ziPT_ID, zigam_19_exp2_int_mdisPT_ziPT,
+                    zigam_20_exp2_int_adisPT_ziPT_Ba_ID, zigam_21_exp2_int_adisPT_ziPT_ID, zigam_22_exp2_int_adisPT_ziPT,
+                    zigam_23_exp2_mdisPT_ziPT_Ba_ID, zigam_24_exp2_mdisPT_ziPT_ID, zigam_25_exp2_mdisPT_ziPT,
+                    zigam_26_exp2_adisPT_ziPT_Ba_ID, zigam_27_exp2_adisPT_ziPT_ID, zigam_28_exp2_adisPT_ziPT,
+                    rank = T)
+
 # the following plot visualizes the performance differences
+# Models initial 1st - 4th #
 plot(compare_performance(zigam_1_exp2_int_ziPT_Ba_ID, zigam_2_exp2_int_ziPT_ID, zigam_3_exp2_int_ziPT_Ba, zigam_4_exp2_int_ziPT,
                          zigam_5_exp2_ziPT_Ba_ID, zigam_6_exp2_ziPT_ID, zigam_7_exp2_ziPT_Ba, zigam_8_exp2_ziPT,
                          zigam_9_exp2_int_zi1_Ba_ID, zigam_10_exp2_int_zi1_ID, zigam_11_exp2_int_zi1_Ba, zigam_12_exp2_int_zi1,
                          zigam_13_exp2_zi1_Ba_ID, zigam_14_exp2_zi1_ID, zigam_15_exp2_zi1_Ba, zigam_16_exp2_zi1))
+
+# Models 5th with dispersion #
+plot(compare_performance(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID, zigam_18_exp2_int_mdisPT_ziPT_ID, zigam_19_exp2_int_mdisPT_ziPT,
+                         zigam_20_exp2_int_adisPT_ziPT_Ba_ID, zigam_21_exp2_int_adisPT_ziPT_ID, zigam_22_exp2_int_adisPT_ziPT,
+                         zigam_23_exp2_mdisPT_ziPT_Ba_ID, zigam_24_exp2_mdisPT_ziPT_ID, zigam_25_exp2_mdisPT_ziPT,
+                         zigam_26_exp2_adisPT_ziPT_Ba_ID, zigam_27_exp2_adisPT_ziPT_ID, zigam_28_exp2_adisPT_ziPT))
+
+
 
 # values in the center of the spider web plot indicate low performance while values on the edge reflect high performance
 # some models might be good in some values but not other (e.g. over fitted models could have a high BIC  but low AIC)
@@ -621,6 +856,21 @@ model_performance(zigam_14_exp2_zi1_ID)
 model_performance(zigam_15_exp2_zi1_Ba)
 model_performance(zigam_16_exp2_zi1)
 
+### 5th Models ###
+model_performance(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID)
+model_performance(zigam_18_exp2_int_mdisPT_ziPT_ID)
+model_performance(zigam_19_exp2_int_mdisPT_ziPT)
+model_performance(zigam_20_exp2_int_adisPT_ziPT_Ba_ID)
+model_performance(zigam_21_exp2_int_adisPT_ziPT_ID)
+model_performance(zigam_22_exp2_int_adisPT_ziPT)
+model_performance(zigam_23_exp2_mdisPT_ziPT_Ba_ID)
+model_performance(zigam_24_exp2_mdisPT_ziPT_ID)
+model_performance(zigam_25_exp2_mdisPT_ziPT)
+model_performance(zigam_26_exp2_adisPT_ziPT_Ba_ID)
+model_performance(zigam_27_exp2_adisPT_ziPT_ID)
+model_performance(zigam_28_exp2_adisPT_ziPT)
+
+
 
 # ### 3.4.2 Check Model Assumptions     - Experiment 2 #### -----------------
 
@@ -648,6 +898,20 @@ check_model(zigam_13_exp2_zi1_Ba_ID)
 check_model(zigam_14_exp2_zi1_ID)
 check_model(zigam_15_exp2_zi1_Ba)
 check_model(zigam_16_exp2_zi1)
+
+### 5th Models ###
+check_model(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID)
+check_model(zigam_18_exp2_int_mdisPT_ziPT_ID)
+check_model(zigam_19_exp2_int_mdisPT_ziPT)
+check_model(zigam_20_exp2_int_adisPT_ziPT_Ba_ID)
+check_model(zigam_21_exp2_int_adisPT_ziPT_ID)
+check_model(zigam_22_exp2_int_adisPT_ziPT)
+check_model(zigam_23_exp2_mdisPT_ziPT_Ba_ID)
+check_model(zigam_24_exp2_mdisPT_ziPT_ID)
+check_model(zigam_25_exp2_mdisPT_ziPT)
+check_model(zigam_26_exp2_adisPT_ziPT_Ba_ID)
+check_model(zigam_27_exp2_adisPT_ziPT_ID)
+check_model(zigam_28_exp2_adisPT_ziPT)
 
 
 # ### 3.5.2 Model Summary               - Experiment 2 #### -----------------
@@ -678,7 +942,19 @@ summary(zigam_14_exp2_zi1_ID)
 summary(zigam_15_exp2_zi1_Ba)
 summary(zigam_16_exp2_zi1)
 
-
+### 5th Models ###
+summary(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID)
+summary(zigam_18_exp2_int_mdisPT_ziPT_ID)
+summary(zigam_19_exp2_int_mdisPT_ziPT)
+summary(zigam_20_exp2_int_adisPT_ziPT_Ba_ID)
+summary(zigam_21_exp2_int_adisPT_ziPT_ID)
+summary(zigam_22_exp2_int_adisPT_ziPT)
+summary(zigam_23_exp2_mdisPT_ziPT_Ba_ID)
+summary(zigam_24_exp2_mdisPT_ziPT_ID)
+summary(zigam_25_exp2_mdisPT_ziPT)
+summary(zigam_26_exp2_adisPT_ziPT_Ba_ID)
+summary(zigam_27_exp2_adisPT_ziPT_ID)
+summary(zigam_28_exp2_adisPT_ziPT)
 
 
 
