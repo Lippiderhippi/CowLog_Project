@@ -599,7 +599,7 @@ summary(zigam_28_exp1_adisPT_ziPT)
 # ### Heteroscedasticity checks ###  --------------------------------------
 
 # DHARMa residuals
-plot(s1 <- simulateResiduals(zigam_1_exp1_int_ziPT_Ba_ID))
+plot(s1 <- simulateResiduals(zigam_21_exp1_int_adisPT_ziPT_ID))
 par(mfrow=c(1,2))
 plotResiduals(s1, df_Rana_exp1$Phase, rank = FALSE)
 plotResiduals(s1, df_Rana_exp1$Treatment, rank  = FALSE)
@@ -615,17 +615,17 @@ plotResiduals(s1, df_Rana_exp1$Treatment, rank  = FALSE)
 # Models I think, are appropriate #
 # probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
 zigam_1_exp2_int_ziPT_Ba_ID <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Batch) + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment,
+                                     ziformula = ~ Phase + Treatment + (1 | Batch) + (1 | Individual_Total),
                                      data = df_Rana_exp2,
                                      family = ziGamma(link = "log"))
 
 zigam_2_exp2_int_ziPT_ID    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment,
+                                     ziformula = ~ Phase + Treatment + (1 | Individual_Total),
                                      data = df_Rana_exp2,
                                      family = ziGamma(link = "log"))
 
 zigam_3_exp2_int_ziPT_Ba    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Batch),
-                                     ziformula = ~ Phase + Treatment,
+                                     ziformula = ~ Phase + Treatment + (1 | Batch),
                                      data = df_Rana_exp2,
                                      family = ziGamma(link = "log"))
 
@@ -640,17 +640,17 @@ zigam_4_exp2_int_ziPT      <- glmmTMB(Active_seconds ~ Phase * Treatment,
 # probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
 # No interaction between Phase and Treatment #
 zigam_5_exp2_ziPT_Ba_ID     <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Batch) + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment,
+                                     ziformula = ~ Phase + Treatment + (1 | Batch) + (1 | Individual_Total),
                                      data = df_Rana_exp2,
                                      family = ziGamma(link = "log"))
 
 zigam_6_exp2_ziPT_ID        <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Individual_Total),
-                                     ziformula = ~ Phase + Treatment,
+                                     ziformula = ~ Phase + Treatment + (1 | Individual_Total),
                                      data = df_Rana_exp2,
                                      family = ziGamma(link = "log"))
 
 zigam_7_exp2_ziPT_Ba        <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Batch),
-                                     ziformula = ~ Phase + Treatment,
+                                     ziformula = ~ Phase + Treatment + (1 | Batch),
                                      data = df_Rana_exp2,
                                      family = ziGamma(link = "log"))
 
@@ -807,7 +807,8 @@ compare_performance(zigam_1_exp2_int_ziPT_Ba_ID, zigam_2_exp2_int_ziPT_ID, zigam
 
 # Models 5th with dispersion #
 compare_performance(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID, zigam_18_exp2_int_mdisPT_ziPT_ID, zigam_19_exp2_int_mdisPT_ziPT,
-                    zigam_20_exp2_int_adisPT_ziPT_Ba_ID, zigam_21_exp2_int_adisPT_ziPT_ID, zigam_22_exp2_int_adisPT_ziPT,
+                    #zigam_20_exp2_int_adisPT_ziPT_Ba_ID, 
+                    zigam_21_exp2_int_adisPT_ziPT_ID, zigam_22_exp2_int_adisPT_ziPT,
                     zigam_23_exp2_mdisPT_ziPT_Ba_ID, zigam_24_exp2_mdisPT_ziPT_ID, zigam_25_exp2_mdisPT_ziPT,
                     zigam_26_exp2_adisPT_ziPT_Ba_ID, zigam_27_exp2_adisPT_ziPT_ID, zigam_28_exp2_adisPT_ziPT,
                     rank = T)
@@ -957,6 +958,16 @@ summary(zigam_27_exp2_adisPT_ziPT_ID)
 summary(zigam_28_exp2_adisPT_ziPT)
 
 
+# ### Heteroscedasticity checks ###  --------------------------------------
+
+# DHARMa residuals
+plot(s1 <- simulateResiduals(zigam_27_exp2_adisPT_ziPT_ID))
+par(mfrow=c(1,2))
+plotResiduals(s1, df_Rana_exp2$Phase, rank = FALSE)
+plotResiduals(s1, df_Rana_exp2$Treatment, rank  = FALSE)
+# under H0 (perfect model), we would expect those boxes to range homogeneously from 0.25-0.75. 
+# To see whether there are deviations from this expectation, the plot calculates a test for uniformity per box, and a test for homgeneity of variances between boxes. 
+# A positive test will be highlighted in red.
 
 
 
