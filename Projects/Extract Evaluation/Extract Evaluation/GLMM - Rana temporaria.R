@@ -23,7 +23,7 @@ if (!require("pacman")) install.packages("pacman")
 # p_load() from {pacman} checks to see if a package is installed.
 # If not it attempts to install the package and then loads it. 
 # It can also be applied to several packages at once (see below)
-pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR)
+pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot)
 
 
 # ### 1. Load the data #### ------------------------------------------------
@@ -34,6 +34,11 @@ df_Rana_L <- read.csv("0. Extract Evaluation_All Rana_v3_L.csv")
 # The respective Variables should have the proper type e.g. int (whole numbers), chr (string), num (continuous)
 str(df_Rana_L)
 # e.g. Phase should not be "int" because is might screw up the analysis as the model might think it is a measurement
+
+# Also check for non-ASCII characters in relevant varaible like - Phase or Treatment
+# This can lead to errors in plotting graphs etc. 
+any(grepl("[^\x01-\x7F]", df_Rana_L$Phase))
+any(grepl("[^\x01-\x7F]", df_Rana_L$Treatment))
 
 
 # ### 2.1 Converting Variable to Factor #### ------------------------------
@@ -65,7 +70,7 @@ str(filtered_df_Rana_L)
 ### Exluding certain Phases or Treatments ###
 
 # This excludes all data for Phase "Stim" or any other
-filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Phase != "Stim")
+filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Treatment != "95C")
 # This excludes all data for Phase "Post" or any other
 filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Phase != "Post")
 
@@ -104,6 +109,10 @@ str(df_Rana_exp2)
 
 
 # ### 2.4 Re-level the data  ####  ----------------------------------------
+# First set the order of Treatments in the right order so they will be displayed by the plots as you would like them to appear in the plots 
+# Assuming Treatment is a factor variable in your data frame df_Rana_exp1
+df_Rana_exp1$Treatment <- factor(df_Rana_exp1$Treatment, levels = c("C1", "BFT", "LN", "MS222", "20C", "24h", "65C", "95C", "Prot-K"))
+df_Rana_exp2$Treatment <- factor(df_Rana_exp2$Treatment, levels = c("C2", "Arg.2", "Arg.02", "Arg.002", "ArgTric", "Tric.02", "Tric.002"))
 df_Rana_exp1$Treatment <- relevel(factor(df_Rana_exp1$Treatment), ref = "C1")
 df_Rana_exp2$Treatment <- relevel(factor(df_Rana_exp2$Treatment), ref = "C2")
 #df_Rana_exp1_1$Treatment <- relevel(factor(df_Rana_exp1_1$Treatment), ref = "C1")
@@ -961,15 +970,198 @@ summary(zigam_28_exp2_adisPT_ziPT)
 # ### Heteroscedasticity checks ###  --------------------------------------
 
 # DHARMa residuals
-plot(s1 <- simulateResiduals(zigam_27_exp2_adisPT_ziPT_ID))
+plot(s1 <- simulateResiduals(zigam_21_exp1_int_adisPT_ziPT_ID),refit = T)
 par(mfrow=c(1,2))
 plotResiduals(s1, df_Rana_exp2$Phase, rank = FALSE)
 plotResiduals(s1, df_Rana_exp2$Treatment, rank  = FALSE)
+
+testZeroInflation(zigam_27_exp2_adisPT_ziPT_ID)
+
+plotConventionalResiduals(zigam_21_exp1_int_adisPT_ziPT_ID)
+
 # under H0 (perfect model), we would expect those boxes to range homogeneously from 0.25-0.75. 
 # To see whether there are deviations from this expectation, the plot calculates a test for uniformity per box, and a test for homgeneity of variances between boxes. 
 # A positive test will be highlighted in red.
 
 
+
+### Boxplot - horizontal ###
+
+ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 1) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  labs(title = "Active Seconds Across Phases for Each Treatment",
+       x = "Phase",
+       y = "Active Seconds [s]") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
+
+ggplot(df_Rana_exp2, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 1) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  labs(title = "Active Seconds Across Phases for Each Treatment",
+       x = "Phase",
+       y = "Active Seconds [s]") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
+
+### Boxplot - facet_wrap ###
+ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 1) +
+  facet_wrap(~ Treatment) +
+  labs(title = "Distribution of Active Seconds Across Phases for Each Treatment",
+       x = "Phase",
+       y = "Active Seconds") +
+  theme_bw()
+
+ggplot(df_Rana_exp2, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 1) +
+  facet_wrap(~ Treatment) +
+  labs(title = "Distribution of Active Seconds Across Phases for Each Treatment",
+       x = "Phase",
+       y = "Active Seconds") +
+  theme_bw()
+
+#theme_grey(
+  base_size = 11,
+  base_family = "",
+  base_line_size = base_size/22,
+  base_rect_size = base_size/22)
+
+#theme_bw(
+  base_size = 11,
+  base_family = "",
+  base_line_size = base_size/22,
+  base_rect_size = base_size/22)
+
+#theme_minimal(
+  base_size = 11,
+  base_family = "",
+  base_line_size = base_size/22,
+  base_rect_size = base_size/22)
+
+#theme_classic(
+  base_size = 11,
+  base_family = "",
+  base_line_size = base_size/22,
+  base_rect_size = base_size/22)
+
+#theme_test(
+  base_size = 11,
+  base_family = "",
+  base_line_size = base_size/22,
+  base_rect_size = base_size/22)
+
+
+-------
+
+
+library(ggplot2)
+library(dplyr)
+
+# Calculate means and standard errors for each combination of Treatment and Phase
+interaction_means <- df_Rana_exp1 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_active_seconds = mean(Active_seconds, na.rm = TRUE),
+            se_active_seconds = sd(Active_seconds, na.rm = TRUE) / sqrt(n()))
+
+# Interaction plot using ggplot2
+ggplot(interaction_means, aes(x = Phase, y = mean_active_seconds, group = Treatment, color = Treatment)) +
+  geom_line(size=1) +
+  geom_point(size=2) +
+  geom_errorbar(aes(ymin = mean_active_seconds - se_active_seconds, ymax = mean_active_seconds + se_active_seconds), width = 0.1) +
+  labs(title = "Interaction Plot of Treatment and Phase on Active Seconds",
+       x = "Treatment",
+       y = "Mean Active Seconds",
+       color = "Treatment") +  # Ensure the legend title is correctly specified
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(size = 10),
+    axis.text.y = element_text(size = 10)
+  )
+
+
+ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, color = Treatment, group = Treatment, shape = Treatment)) +
+  stat_summary(fun = mean, geom = "line", aes(linetype = Treatment), , size = 1) +
+  stat_summary(fun = mean, geom = "point", size = 3) +
+  scale_color_manual(values = c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999", "#125253")) +  # Choose a color palette
+  labs(x = "Phase", y = "Active Seconds", color = "Treatment") +
+  theme_minimal() +  # Adjust theme as per your preference
+  theme(legend.position = "top")  # Move legend to the top for better visibility
+
+
+
+# Extract random effects
+ranef_conditional <- ranef(zigam_21_exp1_int_adisPT_ziPT_ID)$cond$Individual_Total
+ranef_zi <- ranef(zigam_21_exp1_int_adisPT_ziPT_ID)$zi$Individual_Total
+
+# Create data frames for plotting
+ranef_conditional_data <- data.frame(
+  Individual = rownames(ranef_conditional),
+  RandomEffect = ranef_conditional[, 1]
+)
+
+ranef_zi_data <- data.frame(
+  Individual = rownames(ranef_zi),
+  RandomEffect = ranef_zi[, 1]
+)
+
+# Plot random effects for the conditional model
+ggplot(ranef_conditional_data, aes(x = Individual, y = RandomEffect)) +
+  geom_point() +
+  labs(title = "Random Effects (Conditional Model)",
+       x = "Individual",
+       y = "Random Effect") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Plot random effects for the zero-inflation model
+ggplot(ranef_zi_data, aes(x = Individual, y = RandomEffect)) +
+  geom_point() +
+  labs(title = "Random Effects (Zero-Inflation Model)",
+       x = "Individual",
+       y = "Random Effect") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+# Generate a new data frame for prediction
+new_data <- expand.grid(
+  Phase = unique(df_Rana_exp1$Phase),
+  Treatment = unique(df_Rana_exp1$Treatment),
+  Individual_Total = NA
+)
+
+# Predict values
+new_data$Predicted <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, newdata = new_data, type = "response")
+
+# Plot the effects of Phase and Treatment
+ggplot(new_data, aes(x = Phase, y = Predicted, color = Treatment, group = Treatment)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Effects of Phase and Treatment on Active Seconds",
+       x = "Phase",
+       y = "Predicted Active Seconds") +
+  theme_minimal()
+
+
+# Predict zero-inflation probabilities
+zi_probs <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, newdata = new_data, type = "zprob")
+
+# Add zero-inflation probabilities to the new data
+new_data$ZI_Prob <- zi_probs
+
+# Plot zero-inflation probabilities
+ggplot(new_data, aes(x = Phase, y = ZI_Prob, color = Treatment, group = Treatment)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Zero-Inflation Probabilities by Phase and Treatment",
+       x = "Phase",
+       y = "Probability of Zero Activity") +
+  theme_minimal()
 
 
 
