@@ -23,7 +23,7 @@ if (!require("pacman")) install.packages("pacman")
 # p_load() from {pacman} checks to see if a package is installed.
 # If not it attempts to install the package and then loads it. 
 # It can also be applied to several packages at once (see below)
-pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot, reshape2, broom.mixed)
+pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot, reshape2, broom.mixed, ggplot2)
 
 
 # ### 1. Load the data #### ------------------------------------------------
@@ -986,339 +986,417 @@ plotConventionalResiduals(zigam_21_exp1_int_adisPT_ziPT_ID)
 
 # ### Data Plots ### ------------------------------------------------------
 
-### Boxplot - horizontal #
 
+# ### Experiment 1 - Boxplot & Interaction + Zero-Inflation ### -----------
+
+# Boxplots #
 Box_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
-  geom_boxplot(size = 1) +
+  geom_boxplot(size = 0.75, alpha = 0.5) +  # Adjust alpha for overlay visibility
   facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
-  labs(title = "Active Seconds Across Phases for Each Treatment",
-       x = "Phase",
+  labs(title = "Active Seconds Across Phases and Treatments",
+       x = "",
        y = "Active Seconds [s]") +
   theme_bw() +
+  theme(legend.position = "none") +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
 
-# Calculate means and standard errors for each combination of Treatment and Phase
-interaction_means_exp1 <- df_Rana_exp1 %>%
-  group_by(Treatment, Phase) %>%
-  summarise(mean_active_seconds = mean(Active_seconds, na.rm = TRUE),
-            se_active_seconds = sd(Active_seconds, na.rm = TRUE) / sqrt(n()))
+# Extracting Values from Model predictions #
+# Conditional model value predictions
+pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+# Zero-inflation probabilities value predictions
+pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
 
-# Interaction plot using ggplot2
-Int_exp1 <- ggplot(interaction_means_exp1, aes(x = Phase, y = mean_active_seconds, group = Treatment, color = Treatment)) +
-  geom_line(size=1) +
-  geom_point(size=2) +
-  geom_errorbar(aes(ymin = mean_active_seconds - se_active_seconds, ymax = mean_active_seconds + se_active_seconds), width = 0.1) +
-  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
-  labs(title = "Interaction Plot of Treatment and Phase on Active Seconds",
-       x = "Treatment",
-       y = "Mean Active Seconds",
-       color = "Treatment") +  # Ensure the legend title is correctly specified
-  theme_bw()
-
-
-# Conditional model predictions
-pred_conditional <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
-# Zero-inflation probabilities predictions
-pred_zi <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
-
-
-pred_df <- data.frame(
+#Create a new dataframe for calculations and subsequent plotting
+df_pred_exp1 <- data.frame(
   Phase = df_Rana_exp1$Phase,
   Treatment = df_Rana_exp1$Treatment,
-  ActiveSeconds = pred_conditional$fit,
-  ActiveSeconds_se = pred_conditional$se.fit,
-  ZeroInflation = pred_zi$fit,
-  ZeroInflation_se = pred_zi$se.fit
-)
-pred_df$Phase <- factor(pred_df$Phase, ordered = TRUE)
-str(pred_df)
+  Active_seconds = pred_cond_exp1$fit,
+  Active_seconds_se = pred_cond_exp1$se.fit,
+  ZeroInflation = pred_zi_exp1$fit,
+  ZeroInflation_se = pred_zi_exp1$se.fit)
 
-pred_df_zi <- pred_df %>% 
-  select(Phase, Treatment, ZeroInflation, ZeroInflation_se) %>% 
-  rename(Value = ZeroInflation, se.fit = ZeroInflation_se)
+df_pred_exp1$Phase <- factor(df_pred_exp1$Phase, ordered = TRUE)
 
+df_pred_act_exp1 <- df_pred_exp1 %>% 
+  select(Phase, Treatment, Active_seconds, Active_seconds_se)
+
+df_pred_zi_exp1 <- df_pred_exp1 %>% 
+  select(Phase, Treatment, ZeroInflation, ZeroInflation_se)
 
 # Calculate means and standard errors for each combination of Treatment and Phase
-
-Pred_df_zi_exp1 <- pred_df_zi %>%
+df_calpred_act_exp1 <- df_pred_act_exp1 %>%
   group_by(Treatment, Phase) %>%
-  summarise(mean_zi_prob = mean(Value, na.rm = TRUE),
-            se_zi_prob = mean(se.fit, na.rm = TRUE))
+  summarise(Active_seconds = mean(Active_seconds, na.rm = TRUE),
+            Active_seconds_se = mean(Active_seconds_se, na.rm = TRUE))
+
+df_calpred_zi_exp1 <- df_pred_zi_exp1 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_zi_prob = mean(ZeroInflation, na.rm = TRUE),
+            mean_zi_prob_se = mean(ZeroInflation_se, na.rm = TRUE))
+
+# Combine Box_exp1 and Int_exp1 by overlaying them
+Box_Int_combined <- Box_exp1 +
+  geom_line(data = df_calpred_act_exp1, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment), size = 1) +
+  geom_point(data = df_calpred_act_exp1, aes(x = Phase, y = Active_seconds, color = Treatment), size = 1) +
+  geom_errorbar(data = df_calpred_act_exp1, aes(x = Phase, ymin = Active_seconds - Active_seconds_se, ymax = Active_seconds + Active_seconds_se, color = Treatment), width = 0.1) +
+  labs(title = "Active Seconds and Interaction Plot",
+       y = "Active Seconds [s]",
+       color = "Treatment",
+       fill = "Treatment") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
 
 # Plot for Zero Inflation Probabilities
-Zi_exp1 <- ggplot(Pred_df_zi_exp1, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
+Zi_exp1 <- ggplot(df_calpred_zi_exp1, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
-  geom_errorbar(aes(ymin = mean_zi_prob - se_zi_prob, ymax = mean_zi_prob + se_zi_prob), width = 0.1) +
-  facet_grid(~ Treatment) +
-  theme_bw() +
+  geom_errorbar(aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se), width = 0.1) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+  scale_y_continuous(limits = c(-0.1, 1)) +
   labs(
     x = "Phase",
-    y = "Zero Inflation Probabilities",
-    title = "Effects of Phase and Treatment on Zero Inflation Probabilities"
+    y = "Probability of Zero Activity [mean +SE]",
+    title = "Effects of Phase and Treatment on Zero Activity Probabilities"
   ) +
-  theme(legend.position = "bottom")
+  theme_bw() +
+  theme(legend.position = "none")
 
 # Combine plots using patchwork
-combined_plot <- Box_exp1 / Int_exp1 / Zi_exp1 + plot_layout(ncol = 1, heights = c(1, 1, 1))
+combined_plot <- Box_Int_combined / Zi_exp1 + plot_layout(ncol = 1, heights = c(1, 1))
 
 # Display combined plot
-combined_plot
+print(combined_plot)
 
+# ### Experiment 2 - Boxplot & Interaction + Zero-Inflation ### -----------
 
-
-
+# Boxplots #
 Box_exp2 <- ggplot(df_Rana_exp2, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
-  geom_boxplot(size = 1) +
+  geom_boxplot(size = 0.75, alpha = 0.5) +  # Adjust alpha for overlay visibility
   facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
-  labs(title = "Active Seconds Across Phases for Each Treatment",
-       x = "Phase",
+  labs(title = "Active Seconds Across Phases and Treatments",
+       x = "",
        y = "Active Seconds [s]") +
   theme_bw() +
+  theme(legend.position = "none") +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
 
-# Calculate means and standard errors for each combination of Treatment and Phase
-interaction_means_exp2 <- df_Rana_exp2 %>%
-  group_by(Treatment, Phase) %>%
-  summarise(mean_active_seconds = mean(Active_seconds, na.rm = TRUE),
-            se_active_seconds = sd(Active_seconds, na.rm = TRUE) / sqrt(n()))
-
-# Interaction plot using ggplot2
-Int_exp2 <- ggplot(interaction_means_exp2, aes(x = Phase, y = mean_active_seconds, group = Treatment, color = Treatment)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  geom_errorbar(aes(ymin = mean_active_seconds - se_active_seconds, ymax = mean_active_seconds + se_active_seconds), width = 0.1) +
-  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
-  labs(title = "Interaction Plot of Treatment and Phase on Active Seconds",
-       x = "Treatment",
-       y = "Mean Active Seconds",
-       color = "Treatment") +  # Ensure the legend title is correctly specified
-  theme_bw()
-
-
-# Combine plots using patchwork
-combined_plot <- Box_exp2 / Int_exp2 + plot_layout(ncol = 1, heights = c(1, 1))
-
-# Display combined plot
-combined_plot
-
-
---------------
-
-
-
-
-
-
-# theme_update()# Predict zero-inflation probabilities
-zi_probs <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, newdata = new_data, type = "zprob")
-
-# Add zero-inflation probabilities to the new data
-new_data$ZI_Prob <- zi_probs
-
-# Plot zero-inflation probabilities
-ggplot(new_data, aes(x = Phase, y = ZI_Prob, color = Treatment, group = Treatment)) +
-  geom_line() +
-  geom_point() +
-  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F)
-  labs(title = "Zero-Inflation Probabilities by Phase and Treatment",
-       x = "Phase",
-       y = "Probability of Zero Activity") +
-  theme_bw()
-
-
 # Conditional model predictions
-pred_conditional <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+pred_cond_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities predictions
-pred_zi <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
 
+df_pred_exp2 <- data.frame(
+  Phase = df_Rana_exp2$Phase,
+  Treatment = df_Rana_exp2$Treatment,
+  Active_seconds = pred_cond_exp2$fit,
+  Active_seconds_se = pred_cond_exp2$se.fit,
+  ZeroInflation = pred_zi_exp2$fit,
+  ZeroInflation_se = pred_zi_exp2$se.fit)
 
-pred_df <- data.frame(
-  Phase = df_Rana_exp1$Phase,
-  Treatment = df_Rana_exp1$Treatment,
-  ActiveSeconds = pred_conditional$fit,
-  ActiveSeconds_se = pred_conditional$se.fit,
-  ZeroInflation = pred_zi$fit,
-  ZeroInflation_se = pred_zi$se.fit
-)
+df_pred_exp2$Phase <- factor(df_pred_exp2$Phase, ordered = TRUE)
 
-# Separate data frames for Active Seconds and Zero Inflation
-pred_df_active <- pred_df %>% 
-  select(Phase, Treatment, ActiveSeconds, ActiveSeconds_se) %>% 
-  rename(Value = ActiveSeconds, se.fit = ActiveSeconds_se)
+df_pred_act_exp2 <- df_pred_exp2 %>% 
+  select(Phase, Treatment, Active_seconds, Active_seconds_se)
 
-pred_df_zi <- pred_df %>% 
-  select(Phase, Treatment, ZeroInflation, ZeroInflation_se) %>% 
-  rename(Value = ZeroInflation, se.fit = ZeroInflation_se)
+df_pred_zi_exp2 <- df_pred_exp2 %>% 
+  select(Phase, Treatment, ZeroInflation, ZeroInflation_se)
 
 # Calculate means and standard errors for each combination of Treatment and Phase
-Pred_df_zi_exp1 <- pred_df_zi %>%
+df_calpred_act_exp2 <- df_pred_act_exp2 %>%
   group_by(Treatment, Phase) %>%
-  summarise(mean_zi_prob = mean(Value, na.rm = TRUE),
-            se_zi_prob = mean(se.fit, na.rm = TRUE))
+  summarise(Active_seconds = mean(Active_seconds, na.rm = TRUE),
+            Active_seconds_se = mean(Active_seconds_se, na.rm = TRUE))
 
-library(ggplot2)
-library(patchwork)
+df_calpred_zi_exp2 <- df_pred_zi_exp2 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_zi_prob = mean(ZeroInflation, na.rm = TRUE),
+            mean_zi_prob_se = mean(ZeroInflation_se, na.rm = TRUE))
 
-# Plot for Active Seconds
-p1 <- ggplot(pred_df_active, aes(x = Phase, y = Value, color = Treatment)) +
-  geom_line() +
-  geom_ribbon(aes(ymin = Value - se.fit, ymax = Value + se.fit), alpha = 0.2) +
-  facet_grid(~ Treatment) +
-  theme_bw() +
-  labs(
-    x = "Phase",
-    y = "Active Seconds",
-    title = "Effects of Phase and Treatment on Active Seconds"
-  ) +
-  theme(legend.position = "bottom")
+# Combine Box_exp2 and Int_exp2 by overlaying them
+Box_Int_combined <- Box_exp2 +
+  geom_line(data = df_calpred_act_exp2, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment), size = 1) +
+  geom_point(data = df_calpred_act_exp2, aes(x = Phase, y = Active_seconds, color = Treatment), size = 2) +
+  geom_errorbar(data = df_calpred_act_exp2, aes(x = Phase, ymin = Active_seconds - Active_seconds_se, ymax = Active_seconds + Active_seconds_se, color = Treatment), width = 0.1) +
+  labs(title = "Active Seconds and Interaction Plot",
+       y = "Active Seconds [s]",
+       color = "Treatment",
+       fill = "Treatment") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
 
 # Plot for Zero Inflation Probabilities
-p2 <- ggplot(Pred_df_zi_exp1, aes(x = Phase, y = mean_zi_prob, color = Treatment)) +
+Zi_exp2 <- ggplot(df_calpred_zi_exp2, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
-  geom_errorbar(aes(ymin = mean_zi_prob - se_zi_prob, ymax = mean_zi_prob + se_zi_prob), width = 0.1) +
-  facet_grid(~ Treatment) +
-  theme_bw() +
+  geom_errorbar(aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se), width = 0.1) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+  scale_y_continuous(limits = c(-0.1, 1)) +
   labs(
     x = "Phase",
-    y = "Zero Inflation Probabilities",
-    title = "Effects of Phase and Treatment on Zero Inflation Probabilities"
+    y = "Probability of Zero Activity [mean +SE]",
+    title = "Effects of Phase and Treatment on Zero Activity Probabilities"
   ) +
-  theme(legend.position = "bottom")
+  theme_bw() +
+  theme(legend.position = "none")
 
 # Combine plots using patchwork
-combined_plot <- p1 / p2 + plot_layout(ncol = 1, heights = c(1, 1))
+combined_plot <- Box_Int_combined / Zi_exp2 + plot_layout(ncol = 1, heights = c(1, 1))
 
 # Display combined plot
-combined_plot
+print(combined_plot)
+
+
+
+
 
 
 # #### Abstellgleis #### --------------------------------------------------
 
 
+-----------------------------------------------------------------------------------
+### Oldschool Plots with three rows ###
+### Boxplot - horizontal ###
 
-
-library(ggplot2)
-
-# Predicted values from the count model
-predicted_counts <- predict(zigam_exp1_int_zi_rd, type = "response")
-
-# Predicted probability of structural zeros from the zero-inflation model
-predicted_zeros <- predict(zigam_exp1_int_zi_rd, type = "zprob")
-
-
-
-
-trans_df_Rana_exp1 <- df_Rana_exp1
-trans_df_Rana_exp2 <- df_Rana_exp2
-
-trans_df_Rana_exp1$Phase <- as.character(trans_df_Rana_exp1$Phase)
-trans_df_Rana_exp2$Phase <- as.character(trans_df_Rana_exp2$Phase)
-
-str(trans_df_Rana_exp1)
-str(trans_df_Rana_exp2)
-
-lmer_model <- lmer(Active_seconds ~ Phase * Treatment + (1 | Individual_Total), data = df_Rana_L, REML = FALSE)
-
-# Obtain p-values using likelihood ratio test after models
-anova(model)
-
-
-str(df_Rana_exp2)
-transformed_df <- df_Rana_L
-transformed_df$Phase <- as.character(transformed_df$Phase)
-str(transformed_df)
-
-# Load the needed Packages #
-library(dplyr)
-library(tidyverse)
-library(glmmTMB) # package for zero-inflated gamma
-library(performance) # package for model perfomance comparisons
-library(lme4)
-library(patchwork)
-library(DHARMa)
-
-
-BFGS_glmm <- glmmTMB(
-  Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
-  ziformula = ~ Phase + Treatment,
-  data = df_Rana_exp1,
-  family = ziGamma(link = "log"),
-  control = glmmTMBControl(optimizer = optim, optArgs = list(method = "BFGS")))
-
-L_BFGS_B_glmm <- glmmTMB(
-  Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
-  ziformula = ~ Phase + Treatment,
-  data = df_Rana_exp1,
-  family = ziGamma(link = "log"),
-  control = glmmTMBControl(optimizer = optim, optArgs = list(method = "L-BFGS-B")))
-
-CG_glmm <- glmmTMB(
-  Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
-  ziformula = ~ Phase + Treatment,
-  data = df_Rana_exp1,
-  family = ziGamma(link = "log"),
-  control = glmmTMBControl(optimizer = optim, optArgs = list(method = "CG")))
-
-
-
-
-zigam_more_iter <- glmmTMB(
-  Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
-  ziformula = ~ Phase + Treatment,
-  data = df_Rana_exp1,
-  family = ziGamma(link = "log"),
-  control = glmmTMBControl(optimizer = optim, optArgs = list(maxit = 1000000))
-)
-
-check_model(optimized_glmm)
-summary(optimized_glmm)
-check_model(zigam_more_iter)
-
-
-# Generate a new data frame for prediction
-new_data <- expand.grid(
-  Phase = unique(df_Rana_exp1$Phase),
-  Treatment = unique(df_Rana_exp1$Treatment),
-  Individual_Total = NA)
-
-# Predict values
-new_data$Predicted <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, newdata = new_data, type = "response")
-
-# Plot the effects of Phase and Treatment
-ggplot(new_data, aes(x = Phase, y = Predicted, color = Treatment, group = Treatment)) +
-  geom_line() +
-  geom_point() +
+Box_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 1) +
   facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
-  labs(title = "Effects of Phase and Treatment on Active Seconds",
-       x = "Phase",
-       y = "Predicted Active Seconds") +
-  theme_bw()
+  labs(title = "Active Seconds Across Phases and Treatments",
+       x = "",
+       y = "Active Seconds [s]") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
 
 
-
+# Conditional model predictions
+pred_cond_exp1    <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities predictions
-pred_zi <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp1      <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
 
-# theme_update()# Predict zero-inflation probabilities
-zi_probs <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, newdata = new_data, type = "zprob")
 
-# Add zero-inflation probabilities to the new data
-new_data$ZI_Prob <- zi_probs
+df_pred_exp1 <- data.frame(
+  Phase = df_Rana_exp1$Phase,
+  Treatment = df_Rana_exp1$Treatment,
+  ActiveSeconds = pred_cond_exp1$fit,
+  ActiveSeconds_se = pred_cond_exp1$se.fit,
+  ZeroInflation = pred_zi_exp1$fit,
+  ZeroInflation_se = pred_zi_exp1$se.fit)
 
-# Plot zero-inflation probabilities
-Zi_exp1 <- ggplot(new_data, aes(x = Phase, y = ZI_Prob, color = Treatment, group = Treatment)) +
-  geom_line(size=1) +
-  geom_point(size=2) +
+df_pred_exp1$Phase <- factor(df_pred_exp1$Phase, ordered = TRUE)
+
+df_pred_act_exp1 <- df_pred_exp1 %>% 
+  select(Phase, Treatment, ActiveSeconds, ActiveSeconds_se)
+
+df_pred_zi_exp1 <- df_pred_exp1 %>% 
+  select(Phase, Treatment, ZeroInflation, ZeroInflation_se)
+
+# Calculate means and standard errors for each combination of Treatment and Phase
+# CALCULATED FROM MODEL PREDICTIONS!
+
+df_calpred_act_exp1 <- df_pred_act_exp1 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_ActiveSeconds = mean(ActiveSeconds, na.rm = TRUE),
+            mean_ActiveSeconds_se = mean(ActiveSeconds_se, na.rm = TRUE))
+
+df_calpred_zi_exp1 <- df_pred_zi_exp1 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_zi_prob = mean(ZeroInflation, na.rm = TRUE),
+            mean_zi_prob_se = mean(ZeroInflation_se, na.rm = TRUE))
+
+
+# Interaction plot for Active Seconds #
+Int_exp1 <- ggplot(df_calpred_act_exp1, aes(x = Phase, y = mean_ActiveSeconds, group = Treatment, color = Treatment)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = mean_ActiveSeconds - mean_ActiveSeconds_se, ymax = mean_ActiveSeconds + mean_ActiveSeconds_se), width = 0.1) +
   facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
-  labs(title = "Zero-Inflation Probabilities by Phase and Treatment",
-       x = "Phase",
-       y = "Probability of Zero Activity") +
-  theme_bw()
+  labs(title = "Effects of Treatment and Phase on Active Seconds",
+       x = "",
+       y = "Active Seconds [mean + SE]",
+       color = "Treatment")
+theme_bw() + 
+  theme(legend.position = "none")
+
+
+# Plot for Zero Inflation Probabilities #
+Zi_exp1 <- ggplot(df_calpred_zi_exp1, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se), width = 0.1) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  labs(
+    x = "Treatments",
+    y = "Probability of Zero Activity",
+    title = "Effects of Phase and Treatment on Zero Activity Probabilities") +
+  theme_bw() +
+  theme(legend.position = "none")
 
 # Combine plots using patchwork
 combined_plot <- Box_exp1 / Int_exp1 / Zi_exp1 + plot_layout(ncol = 1, heights = c(1, 1, 1))
 
 # Display combined plot
+combined_plot 
+
+
+Box_exp2 <- ggplot(df_Rana_exp2, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 1) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  labs(title = "Active Seconds Across Phases and Treatments",
+       x = "",
+       y = "Active Seconds [s]") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
+
+
+# Conditional model predictions
+pred_cond_exp2    <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+# Zero-inflation probabilities predictions
+pred_zi_exp2      <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+
+
+df_pred_exp2 <- data.frame(
+  Phase = df_Rana_exp2$Phase,
+  Treatment = df_Rana_exp2$Treatment,
+  ActiveSeconds = pred_cond_exp2$fit,
+  ActiveSeconds_se = pred_cond_exp2$se.fit,
+  ZeroInflation = pred_zi_exp2$fit,
+  ZeroInflation_se = pred_zi_exp2$se.fit)
+
+df_pred_exp2$Phase <- factor(df_pred_exp2$Phase, ordered = TRUE)
+
+df_pred_act_exp2 <- df_pred_exp2 %>% 
+  select(Phase, Treatment, ActiveSeconds, ActiveSeconds_se)
+
+df_pred_zi_exp2 <- df_pred_exp2 %>% 
+  select(Phase, Treatment, ZeroInflation, ZeroInflation_se)
+
+# Calculate means and standard errors for each combination of Treatment and Phase
+# CALCULATED FROM MODEL PREDICTIONS!
+
+df_calpred_act_exp2 <- df_pred_act_exp2 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_ActiveSeconds = mean(ActiveSeconds, na.rm = TRUE),
+            mean_ActiveSeconds_se = mean(ActiveSeconds_se, na.rm = TRUE))
+
+df_calpred_zi_exp2 <- df_pred_zi_exp2 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_zi_prob = mean(ZeroInflation, na.rm = TRUE),
+            mean_zi_prob_se = mean(ZeroInflation_se, na.rm = TRUE))
+
+
+# Interaction plot for Active Seconds #
+Int_exp2 <- ggplot(df_calpred_act_exp2, aes(x = Phase, y = mean_ActiveSeconds, group = Treatment, color = Treatment)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = mean_ActiveSeconds - mean_ActiveSeconds_se, ymax = mean_ActiveSeconds + mean_ActiveSeconds_se), width = 0.1) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  labs(title = "Effects of Treatment and Phase on Active Seconds",
+       x = "",
+       y = "Active Seconds [mean + SE]",
+       color = "Treatment") +
+  theme_bw() + 
+  theme(legend.position = "none")
+
+
+# Plot for Zero Inflation Probabilities #
+Zi_exp2 <- ggplot(df_calpred_zi_exp2, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se), width = 0.1) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  labs(
+    x = "Treatments",
+    y = "Probability of Zero Activity",
+    title = "Effects of Phase and Treatment on Zero Activity Probabilities") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+# Combine plots using patchwork
+combined_plot <- Box_exp2 / Int_exp2 / Zi_exp2 + plot_layout(ncol = 1, heights = c(1, 1, 1))
+
+# Display combined plot
 combined_plot
+
+
+### Means and Standard Errors from Raw Data ###
+# Calculate means and standard errors for each combination of Treatment and Phase
+# CALCULATD FROM RAW DATA!
+interaction_means_exp1 <- df_Rana_exp1 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_active_seconds = mean(Active_seconds, na.rm = TRUE),
+            se_active_seconds = sd(Active_seconds, na.rm = TRUE) / sqrt(n()))
+# Calculate means and standard errors for each combination of Treatment and Phase
+interaction_means_exp2 <- df_Rana_exp2 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_active_seconds = mean(Active_seconds, na.rm = TRUE),
+            se_active_seconds = sd(Active_seconds, na.rm = TRUE) / sqrt(n()))
+# Note these values are different from the model predictions as the purely describe the data and do not predict
+
+#---------------------------------------------------------------------------------
+
+
+
+
+### Alternative to Boxplot & Interaction + Zero inflation ###
+### Boxplot + Interaction & Zeroinflation ###
+
+### Boxplot - Active Seconds ###
+Box_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 1, alpha = 0.5) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  labs(title = "Active Seconds Across Phases and Treatments",
+       x = "",
+       y = "Active Seconds [s]") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
+
+# Conditional model predictions
+pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+# Zero-inflation probabilities predictions
+pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+
+df_pred_exp1 <- data.frame(
+  Phase = df_Rana_exp1$Phase,
+  Treatment = df_Rana_exp1$Treatment,
+  ActiveSeconds = pred_cond_exp1$fit,
+  ActiveSeconds_se = pred_cond_exp1$se.fit,
+  ZeroInflation = pred_zi_exp1$fit,
+  ZeroInflation_se = pred_zi_exp1$se.fit
+)
+
+df_pred_exp1$Phase <- factor(df_pred_exp1$Phase, ordered = TRUE)
+
+# Summarize data
+df_calpred_exp1 <- df_pred_exp1 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_ActiveSeconds = mean(ActiveSeconds, na.rm = TRUE),
+            mean_ActiveSeconds_se = mean(ActiveSeconds_se, na.rm = TRUE),
+            mean_zi_prob = mean(ZeroInflation, na.rm = TRUE),
+            mean_zi_prob_se = mean(ZeroInflation_se, na.rm = TRUE))
+
+### Combined plot for Active Seconds and Zero Inflation Probabilities ###
+combined_exp1 <- ggplot(df_calpred_exp1, aes(x = Phase, group = Treatment, color = Treatment)) +
+  geom_line(aes(y = mean_ActiveSeconds), size = 1) +
+  geom_point(aes(y = mean_ActiveSeconds), size = 2) +
+  geom_errorbar(aes(ymin = mean_ActiveSeconds - mean_ActiveSeconds_se, ymax = mean_ActiveSeconds + mean_ActiveSeconds_se), width = 0.1) +
+  geom_line(aes(y = mean_zi_prob * 100), size = 1, linetype = "dashed") + # Scale probability for second axis
+  geom_point(aes(y = mean_zi_prob * 100), size = 2, shape = 4) +
+  geom_errorbar(aes(ymin = (mean_zi_prob - mean_zi_prob_se) * 100, ymax = (mean_zi_prob + mean_zi_prob_se) * 100), width = 0.1, linetype = "dashed") +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  labs(
+    title = "Effects of Treatment and Phase on Active Seconds and Zero Activity Probabilities",
+    x = "",
+    y = "Active Seconds [mean + SE]",
+    color = "Treatment"
+  ) +
+  scale_y_continuous(
+    sec.axis = sec_axis(~./100, name = "Probability of Zero Activity [%]")  # Scale secondary axis back to original
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+# Combine plots using patchwork
+combined_plot <- Box_exp1 / combined_exp1 + plot_layout(heights = c(1, 1))
+
+# Display combined plot
+print(combined_plot)

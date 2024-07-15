@@ -72,11 +72,11 @@ new_data_conditional <- expand.grid(
   Individual_Total = unique(df_Rana_exp1$Individual_Total)
 )
 
-# Predict mean Active_seconds and confidence intervals
-pred_conditional <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, newdata = new_data_conditional, type = "response", se.fit = TRUE)
+# Predict mean Active_seconds and confidence intervals from conditional model
+pred_conditional <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
 
 # Extracting mean predictions and confidence intervals
-Pred_df_conditional <- data.frame(
+pred_conditional <- data.frame(
   Phase = new_data_conditional$Phase,
   Treatment = new_data_conditional$Treatment,
   mean_Active_seconds = pred_conditional$fit,
@@ -84,14 +84,14 @@ Pred_df_conditional <- data.frame(
 )
 
 # Calculate confidence intervals (CI)
-Pred_df_conditional <- Pred_df_conditional %>%
+pred_conditional <- pred_conditional %>%
   mutate(
     lower_CI_Active_seconds = mean_Active_seconds - 1.96 * se_Active_seconds,  # 95% CI
     upper_CI_Active_seconds = mean_Active_seconds + 1.96 * se_Active_seconds   # 95% CI
   )
 
 # Plot mean Active_seconds with confidence intervals
-ggplot(Pred_df_conditional, aes(x = Phase, y = mean_Active_seconds, color = Treatment)) +
+ggplot(pred_conditional, aes(x = Phase, y = mean_Active_seconds,group = Treatment, color = Treatment)) +
   geom_point(size = 3) +
   geom_errorbar(aes(ymin = lower_CI_Active_seconds, ymax = upper_CI_Active_seconds), width = 0.1) +
   facet_grid(~ Treatment) +
@@ -106,10 +106,12 @@ ggplot(Pred_df_conditional, aes(x = Phase, y = mean_Active_seconds, color = Trea
 
 
 # Simulate predictions for probabilities of zeros
-pred_zero_inflated <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, newdata = new_data_conditional, type = "zero_inflated", nsim = 300)
-
+#pred_zero_inflated <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, newdata = new_data_conditional, type = "zero_inflated", nsim = 300)
+# Zero-inflation probabilities predictions
+pred_zi <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
 # Calculate mean probabilities of zeros
-mean_probs_zeros <- apply(pred_zero_inflated, 2, mean)
+mean_probs_zeros <- apply(pred_zi, 2, mean)
+
 
 # Calculate 95% confidence intervals for probabilities of zeros
 lower_CI_probs_zeros <- apply(pred_zero_inflated, 2, function(x) quantile(x, 0.025))

@@ -62,3 +62,4 @@ ggplot(fixed_effects, aes(x = term, y = estimate, ymin = estimate - std.error, y
     color = "Model"
   ) +
   theme(legend.position = "bottom")
+
