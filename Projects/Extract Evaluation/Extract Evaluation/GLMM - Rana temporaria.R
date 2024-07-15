@@ -992,7 +992,8 @@ plotConventionalResiduals(zigam_21_exp1_int_adisPT_ziPT_ID)
 # Boxplots #
 Box_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
   geom_boxplot(size = 0.75, alpha = 0.5) +  # Adjust alpha for overlay visibility
-  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+  scale_y_continuous(limits = c(0, 200)) +
   labs(title = "Active Seconds Across Phases and Treatments",
        x = "",
        y = "Active Seconds [s]") +
@@ -1051,10 +1052,10 @@ Zi_exp1 <- ggplot(df_calpred_zi_exp1, aes(x = Phase, y = mean_zi_prob, group = T
   geom_point(size = 2) +
   geom_errorbar(aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se), width = 0.1) +
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(-0.1, 1)) +
+  scale_y_continuous(limits = c(-0.01, 1)) +
   labs(
     x = "Phase",
-    y = "Probability of Zero Activity [mean +SE]",
+    y = "Zero Activity Propability \n [mean +SE]",
     title = "Effects of Phase and Treatment on Zero Activity Probabilities"
   ) +
   theme_bw() +
@@ -1071,7 +1072,8 @@ print(combined_plot)
 # Boxplots #
 Box_exp2 <- ggplot(df_Rana_exp2, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
   geom_boxplot(size = 0.75, alpha = 0.5) +  # Adjust alpha for overlay visibility
-  facet_grid(rows = ~ Treatment, shrink = T, scales = "fixed", switch = "x", margins = F) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+  scale_y_continuous(limits = c(0, 200)) +
   labs(title = "Active Seconds Across Phases and Treatments",
        x = "",
        y = "Active Seconds [s]") +
@@ -1128,10 +1130,10 @@ Zi_exp2 <- ggplot(df_calpred_zi_exp2, aes(x = Phase, y = mean_zi_prob, group = T
   geom_point(size = 2) +
   geom_errorbar(aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se), width = 0.1) +
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(-0.1, 1)) +
+  scale_y_continuous(limits = c(-0.01, 1)) +
   labs(
     x = "Phase",
-    y = "Probability of Zero Activity [mean +SE]",
+    y = "Zero Activity Propability \n [mean +SE]",
     title = "Effects of Phase and Treatment on Zero Activity Probabilities"
   ) +
   theme_bw() +
@@ -1142,8 +1144,6 @@ combined_plot <- Box_Int_combined / Zi_exp2 + plot_layout(ncol = 1, heights = c(
 
 # Display combined plot
 print(combined_plot)
-
-
 
 
 
