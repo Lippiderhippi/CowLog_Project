@@ -3,8 +3,8 @@ library(broom.mixed)
 library(dplyr)
 
 # Tidy the model results for both the conditional and zero-inflation parts
-tidy_conditional <- tidy(zigam_21_exp1_int_adisPT_ziPT_ID, component = "cond")
-tidy_zi <- tidy(zigam_21_exp1_int_adisPT_ziPT_ID, component = "zi")
+tidy_conditional <- tidy(zigam_21_exp1_int_adisPT_zi1_ID, component = "cond")
+tidy_zi <- tidy(zigam_21_exp1_int_adisPT_zi1_ID, component = "zi")
 
 # Add a column to indicate the model type
 tidy_conditional <- tidy_conditional %>%
@@ -20,7 +20,7 @@ tidy_model <- bind_rows(tidy_conditional, tidy_zi)
 
 
 # Extract summary information
-model_summary <- summary(zigam_21_exp1_int_adisPT_ziPT_ID)
+model_summary <- summary(zigam_21_exp2_int_adisPT_zi1_ID)
 
 # Extract coefficient names in the order they appear in the summary
 cond_terms <- rownames(model_summary$coefficients$cond)
