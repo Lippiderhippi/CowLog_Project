@@ -1010,9 +1010,9 @@ plotConventionalResiduals(zigam_21_exp1_int_adisPT_ziPT_ID)
 
 # Boxplots #
 Box_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
-  geom_boxplot(size = 0.1, alpha = 0.25) +  # Adjust alpha for overlay visibility
+  geom_boxplot(size = 0.1, alpha = 0) +  # Adjust alpha for overlay visibility
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(0, 200)) +
+  scale_y_continuous(limits = c(0, 150)) +
   labs(title = "",
        x = "",
        y = "Active Seconds \n [s]") +
@@ -1089,9 +1089,9 @@ print(combined_plot)
 # ### Experiment 2 - Boxplot & Interaction + Zero-Inflation ### -----------
 
 Box_exp2 <- ggplot(df_Rana_exp2, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
-  geom_boxplot(size = 0.1, alpha = 0.25) +  # Adjust alpha for overlay visibility
+  geom_boxplot(size = 0.1, alpha = 0) +  # Adjust alpha for overlay visibility
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(0, 200)) +
+  scale_y_continuous(limits = c(0, 150)) +
   labs(title = "",
        x = "",
        y = "Active Seconds \n [s]") +
@@ -1150,7 +1150,7 @@ Zi_exp2 <- ggplot(df_calpred_zi_exp2, aes(x = Phase, y = mean_zi_prob, group = T
   geom_point(size = 2) +
   geom_errorbar(linewidth = 1, width = 0.2, aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se)) +
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(-0.05, 1)) +
+  scale_y_continuous(limits = c(-0.05,1)) +
   labs(
     x = "Phase",
     y = "Propability of freezing \n [mean +SE]",

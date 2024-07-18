@@ -1012,21 +1012,21 @@ plotConventionalResiduals(zigam_21_exp2_int_adisPT_zi1_ID)
 
 # Boxplots #
 Box_exp1 <- ggplot(df_Bufo_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
-  geom_boxplot(size = 0.75, alpha = 0.5) +  # Adjust alpha for overlay visibility
+  geom_boxplot(size = 0.1, alpha = 0) +  # Adjust alpha for overlay visibility
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(0, 300)) +
-  labs(title = "Active Seconds Across Phases and Treatments",
+  scale_y_continuous(limits = c(0, 150)) +
+  labs(title = "",
        x = "",
-       y = "Active Seconds [s]") +
+       y = "Active Seconds \n [s]") +
   theme_bw() +
   theme(legend.position = "none") +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
 
 # Extracting Values from Model predictions #
 # Conditional model value predictions
-pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_zi1_ID, type = "conditional", se.fit = TRUE)
+pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities value predictions
-pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_zi1_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
 
 #Create a new dataframe for calculations and subsequent plotting
 df_pred_exp1 <- data.frame(
@@ -1058,26 +1058,26 @@ df_calpred_zi_exp1 <- df_pred_zi_exp1 %>%
 
 # Combine Box_exp1 and Int_exp1 by overlaying them
 Box_Int_combined <- Box_exp1 +
-  geom_smooth(method = "lm", se = FALSE, data = df_calpred_act_exp1, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment), size = 1) +
-  geom_point(data = df_calpred_act_exp1, aes(x = Phase, y = Active_seconds), size = 1) +
-  geom_errorbar(data = df_calpred_act_exp1, aes(x = Phase, ymin = Active_seconds - Active_seconds_se, ymax = Active_seconds + Active_seconds_se, color = Treatment), width = 0.1) +
-  labs(title = "Active Seconds and Interaction Plot",
-       y = "Active Seconds [s]",
+  geom_smooth(linewidth = 2, alpha = 2, method = "lm", se = FALSE, data = df_calpred_act_exp1, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment)) +
+  geom_point(size = 2, alpha = 2, data = df_calpred_act_exp1, aes(x = Phase, y = Active_seconds)) +
+  geom_errorbar(linewidth = 1, width = 0.2, data = df_calpred_act_exp1, aes(x = Phase, ymin = Active_seconds - Active_seconds_se, ymax = Active_seconds + Active_seconds_se, color = Treatment)) +
+  labs(title = "",
+       y = "Active Seconds \n [s]",
        color = "Treatment",
        fill = "Treatment") +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
 
 # Plot for Zero Inflation Probabilities
 Zi_exp1 <- ggplot(df_calpred_zi_exp1, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
-  geom_smooth(method = "lm", se = FALSE, size = 1) +
+  geom_smooth(linewidth = 1, method = "lm", se = FALSE) +
   geom_point(size = 2) +
-  geom_errorbar(aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se), width = 0.1) +
+  geom_errorbar(linewidth = 1, width = 0.2, aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se)) +
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
   scale_y_continuous(limits = c(-0.05, 1)) +
   labs(
     x = "Phase",
-    y = "Zero Activity Propability \n [mean +SE]",
-    title = "Effects of Phase and Treatment on Zero Activity Probabilities"
+    y = "Propability of freezing \n [mean +SE]",
+    title = ""
   ) +
   theme_bw() +
   theme(legend.position = "none")
@@ -1090,23 +1090,24 @@ print(combined_plot)
 
 # ### Experiment 2 - Boxplot & Interaction + Zero-Inflation ### -----------
 
-# Boxplots #
 Box_exp2 <- ggplot(df_Bufo_exp2, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
-  geom_boxplot(size = 0.75, alpha = 0.5) +  # Adjust alpha for overlay visibility
+  geom_boxplot(size = 0.1, alpha = 0) +  # Adjust alpha for overlay visibility
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(0, 300)) +
-  labs(title = "Active Seconds Across Phases and Treatments",
+  scale_y_continuous(limits = c(0, 150)) +
+  labs(title = "",
        x = "",
-       y = "Active Seconds [s]") +
+       y = "Active Seconds \n [s]") +
   theme_bw() +
   theme(legend.position = "none") +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
 
-# Conditional model predictions
-pred_cond_exp2 <- predict(zigam_21_exp2_int_adisPT_zi1_ID, type = "conditional", se.fit = TRUE)
-# Zero-inflation probabilities predictions
-pred_zi_exp2 <- predict(zigam_21_exp2_int_adisPT_zi1_ID, type = "zprob", se.fit = TRUE)
+# Extracting Values from Model predictions #
+# Conditional model value predictions
+pred_cond_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+# Zero-inflation probabilities value predictions
+pred_zi_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
 
+#Create a new dataframe for calculations and subsequent plotting
 df_pred_exp2 <- data.frame(
   Phase = df_Bufo_exp2$Phase,
   Treatment = df_Bufo_exp2$Treatment,
@@ -1136,26 +1137,26 @@ df_calpred_zi_exp2 <- df_pred_zi_exp2 %>%
 
 # Combine Box_exp2 and Int_exp2 by overlaying them
 Box_Int_combined <- Box_exp2 +
-  geom_smooth(method = "lm", se = FALSE, data = df_calpred_act_exp2, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment), size = 1) +
-  geom_point(data = df_calpred_act_exp2, aes(x = Phase, y = Active_seconds, color = Treatment), size = 2) +
-  geom_errorbar(data = df_calpred_act_exp2, aes(x = Phase, ymin = Active_seconds - Active_seconds_se, ymax = Active_seconds + Active_seconds_se, color = Treatment), width = 0.1) +
-  labs(title = "Active Seconds and Interaction Plot",
-       y = "Active Seconds [s]",
+  geom_smooth(linewidth = 2, alpha = 2, method = "lm", se = FALSE, data = df_calpred_act_exp2, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment)) +
+  geom_point(size = 2, alpha = 2, data = df_calpred_act_exp2, aes(x = Phase, y = Active_seconds)) +
+  geom_errorbar(linewidth = 1, width = 0.2, data = df_calpred_act_exp2, aes(x = Phase, ymin = Active_seconds - Active_seconds_se, ymax = Active_seconds + Active_seconds_se, color = Treatment)) +
+  labs(title = "",
+       y = "Active Seconds \n [s]",
        color = "Treatment",
        fill = "Treatment") +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
 
 # Plot for Zero Inflation Probabilities
 Zi_exp2 <- ggplot(df_calpred_zi_exp2, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
-  geom_line(size = 1) +
+  geom_smooth(linewidth = 1, method = "lm", se = FALSE) +
   geom_point(size = 2) +
-  geom_errorbar(aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se), width = 0.1) +
+  geom_errorbar(linewidth = 1, width = 0.2, aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se)) +
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(-0.01, 1)) +
+  scale_y_continuous(limits = c(-0.05,1)) +
   labs(
     x = "Phase",
-    y = "Zero Activity Propability \n [mean +SE]",
-    title = "Effects of Phase and Treatment on Zero Activity Probabilities"
+    y = "Propability of freezing \n [mean +SE]",
+    title = ""
   ) +
   theme_bw() +
   theme(legend.position = "none")
