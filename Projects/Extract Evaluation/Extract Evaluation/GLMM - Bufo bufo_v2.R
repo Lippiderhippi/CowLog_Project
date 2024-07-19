@@ -1014,7 +1014,7 @@ plotConventionalResiduals(zigam_21_exp2_int_adisPT_zi1_ID)
 Box_exp1 <- ggplot(df_Bufo_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
   geom_boxplot(size = 0.1, alpha = 0) +  # Adjust alpha for overlay visibility
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(0, 150)) +
+  scale_y_continuous(limits = c(0, 300)) +
   labs(title = "",
        x = "",
        y = "Active Seconds \n [s]") +
@@ -1024,9 +1024,9 @@ Box_exp1 <- ggplot(df_Bufo_exp1, aes(x = Phase, y = Active_seconds, fill = Treat
 
 # Extracting Values from Model predictions #
 # Conditional model value predictions
-pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_zi1_ID, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities value predictions
-pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_zi1_ID, type = "zprob", se.fit = TRUE)
 
 #Create a new dataframe for calculations and subsequent plotting
 df_pred_exp1 <- data.frame(
@@ -1093,7 +1093,7 @@ print(combined_plot)
 Box_exp2 <- ggplot(df_Bufo_exp2, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
   geom_boxplot(size = 0.1, alpha = 0) +  # Adjust alpha for overlay visibility
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(0, 150)) +
+  scale_y_continuous(limits = c(0, 300)) +
   labs(title = "",
        x = "",
        y = "Active Seconds \n [s]") +
@@ -1103,9 +1103,9 @@ Box_exp2 <- ggplot(df_Bufo_exp2, aes(x = Phase, y = Active_seconds, fill = Treat
 
 # Extracting Values from Model predictions #
 # Conditional model value predictions
-pred_cond_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+pred_cond_exp2 <- predict(zigam_21_exp2_int_adisPT_zi1_ID, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities value predictions
-pred_zi_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp2 <- predict(zigam_21_exp2_int_adisPT_zi1_ID, type = "zprob", se.fit = TRUE)
 
 #Create a new dataframe for calculations and subsequent plotting
 df_pred_exp2 <- data.frame(
