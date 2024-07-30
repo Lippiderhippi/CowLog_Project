@@ -23,7 +23,7 @@ if (!require("pacman")) install.packages("pacman")
 # p_load() from {pacman} checks to see if a package is installed.
 # If not it attempts to install the package and then loads it. 
 # It can also be applied to several packages at once (see below)
-pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot, reshape2, broom.mixed, ggplot2)
+pacman::p_load(dplyr, tidyverse,emmeans, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot, reshape2, broom.mixed, ggplot2)
 
 
 # ### 1. Load the data #### ------------------------------------------------
@@ -58,14 +58,34 @@ str(df_Rana_L)
 
 # ### 2.2 Excluding "lazy" individuals #### -------------------------------
 # Since some animals were inactive in all three phases, these individuals do not hold any useful information for the analysis
+# this excludes all individuals that were inactive in all phases 
 filtered_df_Rana_L <- df_Rana_L %>%
   group_by(Individual_Total) %>%
   filter(!(all(Active_seconds[Phase == "Pre"] == 0) & 
             all(Active_seconds[Phase == "Stim"] == 0) & 
              all(Active_seconds[Phase == "Post"] == 0))) %>%
   ungroup()
-# this excludes all individuals that were inactive in all phases 
-str(filtered_df_Rana_L)
+
+# The following then count the number of excluded and included Individuals per treatment and summarizes how many were then included
+remaining_count <- filtered_df_Rana_L %>%
+  distinct(Individual_Total, Treatment) %>%
+  group_by(Treatment) %>%
+  summarise(Remaining = n())
+
+initial_individuals_per_treatment <- df_Rana_L %>%
+  group_by(Treatment) %>%
+  summarise(Initial_Individuals = n_distinct(Individual_Total))
+
+summary_per_treatment <- initial_individuals_per_treatment %>%
+  left_join(remaining_count, by = "Treatment") %>%
+  mutate(Remaining = coalesce(Remaining, 0),  # Replace NA with 0 if no exclusions for a treatment
+         Excluded = Initial_Individuals - Remaining) %>%
+  select(Treatment, Initial_Individuals, Remaining, Excluded)
+
+# Display the summary of how many Individuals were included/excluded
+summary_per_treatment
+
+
 
 ### Exluding certain Phases or Treatments ###
 
@@ -636,6 +656,14 @@ plotResiduals(s1, df_Rana_exp1$Treatment, rank  = FALSE)
 # A positive test will be highlighted in red.
 
 
+### Extracting predicted activity and confidence intervalls ###
+
+emmeans_result <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment)
+original_scale_result <- summary(emmeans_result, type = "response")
+summary(emmeans_result)
+summary(original_scale_result)
+
+
 
 # ### 3.1.2 Modelling                   - Experiment 2 #### -----------------
 
@@ -1085,6 +1113,36 @@ combined_plot <- Box_Int_combined / Zi_exp1 + plot_layout(ncol = 1, heights = c(
 
 # Display combined plot
 print(combined_plot)
+
+
+### Plot the Marginal Effects ###########################################
+
+# Calculate the marginal means
+emmeans_result <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment, type = "response")
+# Extract the marginal means and their confidence intervals
+df_emm <- as.data.frame(summary(emmeans_result))
+# Rename columns for clarity (optional)
+colnames(df_emm) <- c("Phase", "Treatment", "Marginal_Mean", "SE", "df", "Lower_CI", "Upper_CI")
+
+# Create the plot for marginal effects with faceting by Treatment
+Plot_Marginal_Effects_Faceted <- ggplot(df_emm, aes(x = Phase, y = Marginal_Mean)) +
+  geom_line(aes(group = Treatment, color = Treatment), size = 1) +  # Line for marginal means
+  geom_point(size = 3, aes(color = Treatment)) +  # Points for marginal means
+  geom_errorbar(aes(ymin = Lower_CI, ymax = Upper_CI, color = Treatment), width = 0.2, size = 0.8) +  # Error bars
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +  # Facet by Treatment
+  labs(title = "Marginal Effects of Treatment and Phase",
+       y = "Predicted Active Seconds [s]",
+       color = "Treatment") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5),  # Adjust x-axis text
+        legend.position = "none")  # Remove legend since treatments are faceted
+
+# Print the plot
+print(Plot_Marginal_Effects_Faceted)
+
+# Print the plot
+print(Plot_Marginal_Effects)
+
 
 # ### Experiment 2 - Boxplot & Interaction + Zero-Inflation ### -----------
 

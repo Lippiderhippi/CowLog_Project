@@ -64,11 +64,28 @@ filtered_df_Bufo_L <- df_Bufo_L %>%
              all(Active_seconds[Phase == "Stim"] == 0) & 
              all(Active_seconds[Phase == "Post"] == 0))) %>%
   ungroup()
-# this excludes all individuals that were inactive in all phases 
-str(filtered_df_Bufo_L)
+
+# The following then count the number of excluded and included Individuals per treatment and summarizes how many were then included
+remaining_count <- filtered_df_Bufo_L %>%
+  distinct(Individual_Total, Treatment) %>%
+  group_by(Treatment) %>%
+  summarise(Remaining = n())
+
+initial_individuals_per_treatment <- df_Bufo_L %>%
+  group_by(Treatment) %>%
+  summarise(Initial_Individuals = n_distinct(Individual_Total))
+
+summary_per_treatment <- initial_individuals_per_treatment %>%
+  left_join(remaining_count, by = "Treatment") %>%
+  mutate(Remaining = coalesce(Remaining, 0),  # Replace NA with 0 if no exclusions for a treatment
+         Excluded = Initial_Individuals - Remaining) %>%
+  select(Treatment, Initial_Individuals, Remaining, Excluded)
+
+# Display the summary of how many Individuals were included/excluded
+summary_per_treatment
+
 
 ### Exluding certain Phases or Treatments ###
-
 # This excludes all data for Phase "Stim" or any other
 filtered_df_Bufo_L <- filtered_df_Bufo_L %>% filter(Treatment != "95C")
 # This excludes all data for Phase "Post" or any other
