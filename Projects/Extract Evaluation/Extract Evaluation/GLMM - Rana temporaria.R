@@ -11,7 +11,8 @@
 # tidyverse   = For data manipulation
 # glmmTMB     = For fitting the GLMM with zero-inflated distributions
 # performance = For model evaluation and comparison
-# ggplot2     = 
+# emmeans     = For calculating/extracting estimated marginal means
+# ggplot2     = For plotting data
 # patchwork   = For combining multiple ggplot2 plots into a single cohesive layout
 # DHARMa      = For residual diagnostics for hierarchical (multi-level/mixed) regression models
 # lme4        = 
@@ -32,11 +33,10 @@ df_Rana_L <- read.csv("0. Extract Evaluation_All Rana_v3_L.csv")
 
 # ### 2. Data Structure & Modifications #### ---------------------------------------
 # The respective Variables should have the proper type e.g. int (whole numbers), chr (string), num (continuous)
-str(df_Rana_L)
 # e.g. Phase should not be "int" because is might screw up the analysis as the model might think it is a measurement
-
-# Also check for non-ASCII characters in relevant varaible like - Phase or Treatment
+# Also check for non-ASCII characters in relevant variable like - Phase or Treatment
 # This can lead to errors in plotting graphs etc. 
+str(df_Rana_L)
 any(grepl("[^\x01-\x7F]", df_Rana_L$Phase))
 any(grepl("[^\x01-\x7F]", df_Rana_L$Treatment))
 
@@ -44,15 +44,6 @@ any(grepl("[^\x01-\x7F]", df_Rana_L$Treatment))
 # ### 2.1 Converting Variable to Factor #### ------------------------------
 # Here I needed to convert Phase to a factor
 df_Rana_L$Phase <- factor(df_Rana_L$Phase, levels = c(1, 2, 3), labels = c("Pre", "Stim", "Post"), ordered = TRUE)
-#df_Rana_L$Phase <- factor(df_Rana_L$Phase, levels = c(1, 2, 3), labels = c("Pre", "Stim", "Post"))
-str(df_Rana_L)
-
-# Convert the ordered factor to numeric
-df_Rana_L$Phase_numeric <- as.numeric(df_Rana_L$Phase)
-str(df_Rana_L)
-
-# this changes the variable type from whatever it is to a factor and relabels them as "1", "2" etc.
-# I did this because "phase" as "int" caused a problem during the analysis not recognizing "phase" as an ordinal variable
 str(df_Rana_L)
 
 
@@ -66,15 +57,16 @@ filtered_df_Rana_L <- df_Rana_L %>%
              all(Active_seconds[Phase == "Post"] == 0))) %>%
   ungroup()
 
-# The following then count the number of excluded and included Individuals per treatment and summarizes how many were then included
-remaining_count <- filtered_df_Rana_L %>%
-  distinct(Individual_Total, Treatment) %>%
-  group_by(Treatment) %>%
-  summarise(Remaining = n())
+# The following then counts the number of excluded individuals per treatment and summarizes how many remain
 
 initial_individuals_per_treatment <- df_Rana_L %>%
   group_by(Treatment) %>%
   summarise(Initial_Individuals = n_distinct(Individual_Total))
+
+remaining_count <- filtered_df_Rana_L %>%
+  distinct(Individual_Total, Treatment) %>%
+  group_by(Treatment) %>%
+  summarise(Remaining = n())
 
 summary_per_treatment <- initial_individuals_per_treatment %>%
   left_join(remaining_count, by = "Treatment") %>%
@@ -87,18 +79,25 @@ summary_per_treatment
 
 
 
-### Exluding certain Phases or Treatments ###
+# ### OPTIONAL - Excluding certain Phases or Treatments ### --------------------------
+# This is OPTIONAL and was not done for the analysis of this data set
 
-# This excludes all data for Phase "Stim" or any other
+# This excludes all data for Treatment "95C" or any other
 filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Treatment != "95C")
 # This excludes all data for Phase "Post" or any other
 filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Phase != "Post")
 
-#### Combine Variables to reduce collinearity - Phases ###
+
+
+# ### OPTIONAL - Combining to reduce collinearity ### ------------------------------------------
+# This is OPTIONAL and was not done for the analysis of this data set
+
+# Combining Phases #
 filtered_df_Rana_L$Combined_Phase <- ifelse(filtered_df_Rana_L$Phase %in% c("Stim", "Post"), "Stim_Post", "Pre")
-# Combine Variables to reduce collinearity - Treatments
+
+# Combining Treatments #
 filtered_df_Rana_L$Combined_Treatment <- ifelse(data$Treatment %in% c("boiled", "frozen", "aged"), "processed", "unprocessed")
-  
+
 # This essentially create a binary or categorical variable that distinguishes between two conditions:
   # "Pre"-Phase: Represents the period before any stimulus is introduced.
   # "Stim_Post"-Phase: Represents both the "Stim" and "Post" phases combined, indicating the period during and after the stimulus introduction.
@@ -112,18 +111,30 @@ filtered_df_Rana_L$Combined_Treatment <- ifelse(data$Treatment %in% c("boiled", 
 # Note: Given that all phases are equal in duration (5 minutes), there is no inherent imbalance in observation times between phases after combining them into "stim_post."
 # Note: This ensures that each phase contributes equally to the combined variable, reflecting the consistent observation protocol of your study.
 
- 
+
 # ### 2.3 Split up the data #### ------------------------------------------
+# I split up the data according to the respective available controls 
+# i.e. I have a control for Experiments 1 and another control for Experiments 2
 df_Rana_exp1 <- filter(filtered_df_Rana_L, Filter_1 == 1)
 df_Rana_exp2 <- filter(filtered_df_Rana_L, Filter_1 == 2)
 #df_Rana_exp1_1 <- filter(filtered_df_Rana_L, Filter_1_1 == 1)
 #df_Rana_exp1_2 <- filter(filtered_df_Rana_L, Filter_1_2 == 1)
-# more elegant way of filtering is e.g. ===> df_Rana_exp1 <- df_Rana_exp1 %>%  filter(Filter_1 == 1)
 str(df_Rana_exp1)
 str(df_Rana_exp2)
 
-# The following counts the abundance of zeros
+
+# ### OPTIONAL - Centering to reducing collinearity ### ------------------------------
+df_Rana_exp1$Phase_centered <- scale(df_Rana_exp1$Phase, center = TRUE, scale = FALSE)
+df_Rana_exp1$Treatment_centered <- scale(df_Rana_exp1$Treatment, center = TRUE, scale = FALSE)
+
+
+# ### Counting abundances of "Zero" ### ------------------------------------
+# This reports the number of "zeros" per treatment and Phase
 # This gives an idea of how to model the zero-inflation part of of the model
+# e.g. because species might have different "freezing" behaviors or abundances of zeros.
+# In this particular case Rana had a lot of "zeros" while Bufo did not.
+# Therefore I choose different "ziformula", modeling different "zero" occurrences probabilities for Rana and Bufo 
+
 zero_counts <- df_Rana_exp1 %>%
   mutate(Zero_Active_seconds = ifelse(Active_seconds == 0, 1, 0)) %>%
   group_by(Phase, Treatment) %>%
@@ -131,7 +142,7 @@ zero_counts <- df_Rana_exp1 %>%
     Zero_Count = sum(Zero_Active_seconds),
     Total_Count = n(),
     Zero_Proportion = Zero_Count / Total_Count)
-print(n = 50, zero_counts)
+print(n = 50, zero_counts) # Might have to be adjusted to show all Treatments and Phases
 
 zero_counts <- df_Rana_exp2 %>%
   mutate(Zero_Active_seconds = ifelse(Active_seconds == 0, 1, 0)) %>%
@@ -140,30 +151,28 @@ zero_counts <- df_Rana_exp2 %>%
     Zero_Count = sum(Zero_Active_seconds),
     Total_Count = n(),
     Zero_Proportion = Zero_Count / Total_Count)
-print(n = 50, zero_counts)
+print(n = 50, zero_counts) # Might have to be adjusted to show all Treatments and Phases
 
-#### Centering Phase and Treatment to reduce collinearity ###
-#df_Rana_exp1$Phase_centered <- scale(df_Rana_exp1$Phase, center = TRUE, scale = FALSE)
-#df_Rana_exp1$Treatment_centered <- scale(df_Rana_exp1$Treatment, center = TRUE, scale = FALSE)
 
 
 # ### 2.4 Re-level the data  ####  ----------------------------------------
 # First set the order of Treatments in the right order so they will be displayed by the plots as you would like them to appear in the plots 
 # Assuming Treatment is a factor variable in your data frame df_Rana_exp1
+# This will set "C1 = Control1" or "C2 = Control2" as the reference treatment for any subsequent analysis
+# I do not know however if this is necessary or harmful
+# It seemed to be reasonable from what the outcome is when using this
 df_Rana_exp1$Treatment <- factor(df_Rana_exp1$Treatment, levels = c("C1", "BFT", "LN2", "MS222", "-20C", "24h", "65C", "95C", "Prot-K"))
 df_Rana_exp2$Treatment <- factor(df_Rana_exp2$Treatment, levels = c("C2", "Arg.2", "Arg.02", "Arg.002", "ArgTric", "Tric.02", "Tric.002"))
 df_Rana_exp1$Treatment <- relevel(factor(df_Rana_exp1$Treatment), ref = "C1")
 df_Rana_exp2$Treatment <- relevel(factor(df_Rana_exp2$Treatment), ref = "C2")
-#df_Rana_exp1_1$Treatment <- relevel(factor(df_Rana_exp1_1$Treatment), ref = "C1")
-#df_Rana_exp1_2$Treatment <- relevel(factor(df_Rana_exp1_2$Treatment), ref = "C1")
-# This will set "C1 = Control1" as the reference treatment for any subsequent analysis
-# I do not know however if this is necessary or harmful
-# It seemed to be reasonable from what the outcome is when using this
+
+# This shows the levels per Factor and the order in which they will be reported
 levels(df_Rana_exp1$Treatment)
 levels(df_Rana_exp1$Phase)
 levels(df_Rana_exp2$Treatment) 
 levels(df_Rana_exp2$Phase)
-# Check if the desired reference treatment is at first place. That is important for subsequent analysis.
+# Check if the desired reference treatment is at first place.
+# That is important for subsequent analysis because the first place is always the reference to which the other levels will be compared.
 # The other treatments can be in any order. R seems to order them according to values and then letters.
 str(df_Rana_exp1)
 str(df_Rana_exp2)
@@ -221,8 +230,8 @@ install.packages("glmmTMB")
 # ### 3.1.1 Modelling                   - Experiment 1 #### -----------------
 
 ### 1st initial Models ###
-# Models I think, are appropriate #
-# probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
+# probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors and random effects
+# That means that the probability of "zeros" is different per Phase and Treatments
 
 zigam_1_exp1_int_ziPT_Ba_ID <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total) + (1 | Batch),
                                           ziformula = ~ Phase + Treatment + (1 | Individual_Total) + (1 | Batch),
@@ -246,8 +255,6 @@ zigam_4_exp1_int_ziPT       <- glmmTMB(Active_seconds ~ Phase * Treatment,
 
 
 ### 2nd Models ###
-# Models I think, could be appropriate #
-# probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
 # No interaction between Phase and Treatment #
 
 zigam_5_exp1_ziPT_Ba_ID     <- glmmTMB(Active_seconds ~ Phase + Treatment + (1 | Batch) + (1 | Individual_Total),
@@ -272,7 +279,6 @@ zigam_8_exp1_ziPT           <- glmmTMB(Active_seconds ~ Phase + Treatment,
 
 
 ### 3rd Models ###
-# Models I think, are not appropriate #
 # probability of zeros (Active_seconds == 0) is the same across Phase and Treatment as predictors #
 
 zigam_9_exp1_int_zi1_Ba_ID    <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Batch) + (1 | Individual_Total),
@@ -297,7 +303,6 @@ zigam_12_exp1_int_zi1          <- glmmTMB(Active_seconds ~ Phase * Treatment,
 
 
 ### 4th Models ###
-# Models I think, are not appropriate #
 # probability of zeros (Active_seconds == 0) is the same across Phase and Treatment as predictors #
 # No interaction between Phase and Treatment #
 
@@ -323,8 +328,13 @@ zigam_16_exp1_zi1            <- glmmTMB(Active_seconds ~ Phase + Treatment,
 
 ### 5th Models ###
 # Models I think, are most appropriate #
-# probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
-# Models that account for Heteroscedasticity #
+# 1. Interaction Term ~ Phase*Treatment: Is accounting for any baseline imbalances 
+# 2. Ziformula: Probability of "zeros" (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
+# 2. Ziformula: This means the probability of "zeros" occurring is different across Phases and Treatments #
+# 3. Dispformula: Models account for Heteroscedasticity #
+# 3. Dispformula: By doing this, I am essentially allowing the dispersion to vary according to one or more covariates.
+# 3. Dispformula: This can effectively account for heteroscedasticity in my data
+# 3. Dispformula: Note: "dispformula" does not allow the inclusion of random factors
 
 zigam_17_exp1_int_mdisPT_ziPT_Ba_ID      <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total) + (1 | Batch),
                                                     dispformula = ~ Phase * Treatment,
@@ -402,7 +412,7 @@ zigam_28_exp1_adisPT_ziPT               <- glmmTMB(Active_seconds ~ Phase + Trea
 
 
 
-# ### 3.2.1 Compare Model Performance   - Experiment 1 #### -----------------
+# ### 3.2.1 Compare Model Performance   - Experiments 1 #### -----------------
 
 https://www.youtube.com/watch?v=EPIxQ5i5oxs
 https://easystats.github.io/see/articles/performance.html 
@@ -656,12 +666,14 @@ plotResiduals(s1, df_Rana_exp1$Treatment, rank  = FALSE)
 # A positive test will be highlighted in red.
 
 
-### Extracting predicted activity and confidence intervalls ###
 
+# ### Extracting values from the model to report ### ---------------------------------------
+
+# Estimated marginal means #
 emmeans_result <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment)
+summary(emmeans_result) # Results are given on the log (not the response) scale
 original_scale_result <- summary(emmeans_result, type = "response")
-summary(emmeans_result)
-summary(original_scale_result)
+summary(original_scale_result) # Results are back-transformed from the log scale
 
 
 
@@ -770,6 +782,9 @@ zigam_16_exp2_zi1            <- glmmTMB(Active_seconds ~ Phase + Treatment,
 # Models I think, are most appropriate #
 # probability of zeros (Active_seconds == 0) is modeled using Phase and Treatment as predictors #
 # Models that account for Heteroscedasticity #
+# By doing this, I am essentially allowing the dispersion to vary according to one or more covariates.
+# This can effectively account for heteroscedasticity in my data
+# Note: "dispformula" does not allow the inclusion of random factors
 
 zigam_17_exp2_int_mdisPT_ziPT_Ba_ID      <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total) + (1 | Batch),
                                                    dispformula = ~ Phase * Treatment,
