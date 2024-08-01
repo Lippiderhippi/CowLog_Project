@@ -24,7 +24,7 @@ if (!require("pacman")) install.packages("pacman")
 # p_load() from {pacman} checks to see if a package is installed.
 # If not it attempts to install the package and then loads it. 
 # It can also be applied to several packages at once (see below)
-pacman::p_load(dplyr, tidyverse,emmeans, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot, reshape2, broom.mixed, ggplot2)
+pacman::p_load(dplyr, tidyverse, emmeans, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot, reshape2, broom.mixed, ggplot2)
 
 
 # ### 1. Load the data #### ------------------------------------------------
@@ -660,57 +660,226 @@ summary(zigam_28_exp1_adisPT_ziPT)
 # ### Extracting values from the model to report ### ---------------------------------------
 # Extract coefficients
 
-coef_conditional <- fixef(zigam_21_exp1_int_adisPT_ziPT_ID)$cond  # Coefficients for the conditional zigam_21_exp1_int_adisPT_ziPT_ID
-coef_zero_inflation <- fixef(zigam_21_exp1_int_adisPT_ziPT_ID)$zi  # Coefficients for the zero-inflation zigam_21_exp1_int_adisPT_ziPT_ID
-coef_dispersion <- fixef(zigam_21_exp1_int_adisPT_ziPT_ID)$disp   # Coefficients for the dispersion zigam_21_exp1_int_adisPT_ziPT_ID
-
-# Transform coefficients from log scale to original scale
-exp_coef_conditional <- exp(coef_conditional)
-exp_coef_zero_inflation <- exp(coef_zero_inflation)
-exp_coef_dispersion <- exp(coef_dispersion)
-
-# Display transformed coefficients
-exp_coef_conditional
-exp_coef_zero_inflation
-exp_coef_dispersion
 
 
-# Extract coefficients
-Phase <- coef_conditional["(Phase.L)"]
+### 1st version ###
 
-# Find interaction terms (assuming they are in the format "Phase.L:TreatmentBFT")
-interaction_terms <- grep(":", names(coef_conditional), value = TRUE)
+model_summary <- summary(zigam_21_exp1_int_adisPT_ziPT_ID)
 
-# Function to calculate interaction effects
-calculate_interaction_effect <- function(interaction) {
-  # Split interaction term into its components
-  terms <- strsplit(interaction, ":")[[1]]
-  
-  # Calculate combined effect
-  combined_effect <- exp(Phase + 
-                           coef_conditional[terms[1]] + 
-                           coef_conditional[terms[2]] + 
-                           coef_conditional[interaction])
-  
-  return(combined_effect)
+# Extract coefficients and standard errors for the conditional model
+coef_values_cond <- model_summary$coefficients$cond[, "Estimate"]
+se_values_cond <- model_summary$coefficients$cond[, "Std. Error"]
+
+# Extract coefficients and standard errors for the zero-inflation model
+coef_values_zi <- model_summary$coefficients$zi[, "Estimate"]
+se_values_zi <- model_summary$coefficients$zi[, "Std. Error"]
+
+# Extract coefficients and standard errors for the dispersion model
+coef_values_disp <- model_summary$coefficients$disp[, "Estimate"]
+se_values_disp <- model_summary$coefficients$disp[, "Std. Error"]
+
+# Function to calculate exponentiated coefficient and its standard error
+calculate_exp_and_se <- function(coef, se) {
+  exp_coef <- exp(coef)
+  se_exp_coef <- exp_coef * se
+  return(list(exp_coef = exp_coef, se_exp_coef = se_exp_coef))
 }
 
-# Compute and display interaction effects
-interaction_effects <- sapply(interaction_terms, calculate_interaction_effect)
-print("Interaction Effects (Original Scale):")
-print(interaction_effects)
+# Calculate exponentiated values and standard errors for conditional model
+exp_and_se_cond <- mapply(calculate_exp_and_se, coef_values_cond, se_values_cond, SIMPLIFY = FALSE)
 
-???
-exp(-0.149 - 0.174)
-???
+# Calculate exponentiated values and standard errors for zero-inflation model
+exp_and_se_zi <- mapply(calculate_exp_and_se, coef_values_zi, se_values_zi, SIMPLIFY = FALSE)
+
+# Calculate exponentiated values and standard errors for dispersion model
+exp_and_se_disp <- mapply(calculate_exp_and_se, coef_values_disp, se_values_disp, SIMPLIFY = FALSE)
+
+# Print results for conditional model
+cat("Conditional Model Results:\n")
+for (i in seq_along(exp_and_se_cond)) {
+  cat("Term:", names(exp_and_se_cond)[i], "\n")
+  cat("Exponentiated Coefficient:", exp_and_se_cond[[i]]$exp_coef, "\n")
+  cat("Standard Error of Exponentiated Coefficient:", exp_and_se_cond[[i]]$se_exp_coef, "\n\n")
+}
+
+# Print results for zero-inflation model
+cat("Zero-Inflation Model Results:\n")
+for (i in seq_along(exp_and_se_zi)) {
+  cat("Term:", names(exp_and_se_zi)[i], "\n")
+  cat("Exponentiated Coefficient:", exp_and_se_zi[[i]]$exp_coef, "\n")
+  cat("Standard Error of Exponentiated Coefficient:", exp_and_se_zi[[i]]$se_exp_coef, "\n\n")
+}
+
+# Print results for dispersion model
+cat("Dispersion Model Results:\n")
+for (i in seq_along(exp_and_se_disp)) {
+  cat("Term:", names(exp_and_se_disp)[i], "\n")
+  cat("Exponentiated Coefficient:", exp_and_se_disp[[i]]$exp_coef, "\n")
+  cat("Standard Error of Exponentiated Coefficient:", exp_and_se_disp[[i]]$se_exp_coef, "\n\n")
+}
+
+### 2nd version ###
+
+# Extract coefficients and standard errors for the conditional model
+coef_values_cond <- model_summary$coefficients$cond[, "Estimate"]
+se_values_cond <- model_summary$coefficients$cond[, "Std. Error"]
+
+# Extract coefficients and standard errors for the zero-inflation model
+coef_values_zi <- model_summary$coefficients$zi[, "Estimate"]
+se_values_zi <- model_summary$coefficients$zi[, "Std. Error"]
+
+# Extract coefficients and standard errors for the dispersion model
+coef_values_disp <- model_summary$coefficients$disp[, "Estimate"]
+se_values_disp <- model_summary$coefficients$disp[, "Std. Error"]
+
+# Function to calculate exponentiated coefficient and its standard error
+calculate_exp_and_se <- function(coef, se) {
+  exp_coef <- exp(coef)
+  se_exp_coef <- exp_coef * se
+  return(list(exp_coef = exp_coef, se_exp_coef = se_exp_coef))
+}
+
+# Calculate exponentiated values and standard errors for conditional model
+exp_and_se_cond <- mapply(calculate_exp_and_se, coef_values_cond, se_values_cond, SIMPLIFY = FALSE)
+
+# Calculate exponentiated values and standard errors for zero-inflation model
+exp_and_se_zi <- mapply(calculate_exp_and_se, coef_values_zi, se_values_zi, SIMPLIFY = FALSE)
+
+# Calculate exponentiated values and standard errors for dispersion model
+exp_and_se_disp <- mapply(calculate_exp_and_se, coef_values_disp, se_values_disp, SIMPLIFY = FALSE)
+
+# Print results for conditional model
+cat("Conditional Model Results:\n")
+for (i in seq_along(exp_and_se_cond)) {
+  cat("Term:", names(exp_and_se_cond)[i], "\n")
+  cat("Exponentiated Coefficient:", exp_and_se_cond[[i]]$exp_coef, "\n")
+  cat("Standard Error of Exponentiated Coefficient:", exp_and_se_cond[[i]]$se_exp_coef, "\n\n")
+}
+
+# Print results for zero-inflation model
+cat("Zero-Inflation Model Results:\n")
+for (i in seq_along(exp_and_se_zi)) {
+  cat("Term:", names(exp_and_se_zi)[i], "\n")
+  cat("Exponentiated Coefficient:", exp_and_se_zi[[i]]$exp_coef, "\n")
+  cat("Standard Error of Exponentiated Coefficient:", exp_and_se_zi[[i]]$se_exp_coef, "\n\n")
+}
+
+# Print results for dispersion model
+cat("Dispersion Model Results:\n")
+for (i in seq_along(exp_and_se_disp)) {
+  cat("Term:", names(exp_and_se_disp)[i], "\n")
+  cat("Exponentiated Coefficient:", exp_and_se_disp[[i]]$exp_coef, "\n")
+  cat("Standard Error of Exponentiated Coefficient:", exp_and_se_disp[[i]]$se_exp_coef, "\n\n")
+}
+
+
+### version 3 ###
+
+model_summary <- summary(zigam_21_exp1_int_adisPT_ziPT_ID)
+
+# Function to calculate exponentiated coefficient and its standard error
+calculate_exp_and_se <- function(coef, se) {
+  exp_coef <- exp(coef)
+  se_exp_coef <- exp_coef * se  # Approximate SE for exponentiated coefficient
+  return(list(exp_coef = exp_coef, se_exp_coef = se_exp_coef))
+}
+
+# Extract coefficients and standard errors for the conditional model
+coef_values_cond <- model_summary$coefficients$cond[, "Estimate"]
+se_values_cond <- model_summary$coefficients$cond[, "Std. Error"]
+exp_and_se_cond <- mapply(calculate_exp_and_se, coef_values_cond, se_values_cond, SIMPLIFY = FALSE)
+
+# Extract coefficients and standard errors for the dispersion model
+coef_values_disp <- model_summary$coefficients$disp[, "Estimate"]
+se_values_disp <- model_summary$coefficients$disp[, "Std. Error"]
+exp_and_se_disp <- mapply(calculate_exp_and_se, coef_values_disp, se_values_disp, SIMPLIFY = FALSE)
+
+# Extract coefficients and standard errors for the zero-inflation model
+coef_values_zero <- model_summary$coefficients$zi[, "Estimate"]
+se_values_zero <- model_summary$coefficients$zi[, "Std. Error"]
+exp_and_se_zero <- mapply(calculate_exp_and_se, coef_values_zero, se_values_zero, SIMPLIFY = FALSE)
+
+# Print results for all model components
+print_results <- function(exp_and_se, model_type) {
+  cat(paste("\nExponentiated Coefficients and Standard Errors for", model_type, "Model:\n"))
+  for (term in names(exp_and_se)) {
+    exp_coef <- exp_and_se[[term]]$exp_coef
+    se_exp_coef <- exp_and_se[[term]]$se_exp_coef
+    cat("Term:", term, "\n")
+    cat("Exponentiated Coefficient:", exp_coef, "\n")
+    cat("Standard Error of Exponentiated Coefficient:", se_exp_coef, "\n")
+    cat("\n")
+  }
+}
+
+print_results(exp_and_se_cond, "Conditional")
+print_results(exp_and_se_disp, "Dispersion")
+print_results(exp_and_se_zero, "Zero-Inflation")
+
+# Function to calculate and print combined effects for interaction terms
+calculate_interaction_effects <- function(coef_values, se_values, exp_and_se, model_type) {
+  interaction_terms <- grep(":", names(exp_and_se), value = TRUE)
+  cat(paste("\nCombined Effects for Interaction Terms in", model_type, "Model:\n"))
+  for (interaction in interaction_terms) {
+    # Split interaction into its components
+    parts <- strsplit(interaction, ":")[[1]]
+    term1 <- parts[1]
+    term2 <- parts[2]
+    
+    # Check if the terms are in the main effects list
+    if (term1 %in% names(exp_and_se) && term2 %in% names(exp_and_se)) {
+      term1_coef <- coef_values[term1]
+      term1_se <- se_values[term1]
+      
+      term2_coef <- coef_values[term2]
+      term2_se <- se_values[term2]
+      
+      interaction_coef <- coef_values[interaction]
+      interaction_se <- se_values[interaction]
+      
+      # Calculate combined effect
+      combined_coef <- term1_coef + term2_coef + interaction_coef       # cutting out "term2_coef" ???
+      exp_combined_coef <- exp(combined_coef)
+      
+      # Calculate variance for combined effect (assuming errors are independent)
+      combined_var <- (term1_se^2) + (term2_se^2) + (interaction_se^2)  # cutting out "term2_coef" ???
+      combined_se <- sqrt(combined_var)
+      
+      # Exponentiate the standard error
+      exp_combined_se <- exp(combined_coef) * combined_se
+      
+      cat("Interaction Term:", interaction, "\n")
+      cat("Exponentiated Combined Coefficient:", exp_combined_coef, "\n")
+      cat("Standard Error of Exponentiated Combined Coefficient:", exp_combined_se, "\n")
+      cat("\n")
+    }
+  }
+}
+
+# Calculate and print combined effects for interaction terms in each model
+calculate_interaction_effects(coef_values_cond, se_values_cond, exp_and_se_cond, "Conditional")
+calculate_interaction_effects(coef_values_disp, se_values_disp, exp_and_se_disp, "Dispersion")
+calculate_interaction_effects(coef_values_zero, se_values_zero, exp_and_se_zero, "Zero-Inflation")
+
+
+
+exp(-0.149 - 0.671) # Phase:BFT expected activity after Treatment effect is ~44 seconds
+100*exp(-0.149 - 0.174) # Phase:MS222 expected activity after Treatment effect is ~72 seconds
+
+sqrt(0.05809^2 + 0.17498^2)
+exp(-0.149)*0.058
+exp(0.149 - 0.225)
+
+
+exp(-0.149 - 0.527)
 
 # Estimated marginal means #
 # Log Scale #
-emmeans_result <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment)
-summary(emmeans_result) # Results are given on the log (not the response) scale
+emmeans_result_exp1 <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment)
+summary(emmeans_result_exp1) # Results are given on the log (not the response) scale
 
 # Original Scale #
-original_scale_result <- summary(emmeans_result, type = "response") # The type argument specifies the scale on which to return the results.
+original_scale_result_exp1 <- summary(emmeans_result_exp1, type = "response") # The type argument specifies the scale on which to return the results.
 # Setting type = "response" tells the summary function to transform the estimated marginal means from the link function scale (linear predictor) back to the original response scale.
 # type = link           :returns the estimated marginal means (EMMs) on the scale of the linear predictor
 # type = response       :returns the EMMs on the original response scale, which means the results are transformed back from the link scale to the original scale of the response variable
@@ -718,7 +887,7 @@ original_scale_result <- summary(emmeans_result, type = "response") # The type a
 # type = lp or linpred  :similar to "link" 
 # type = cumulative     :Used in ordinal models to provide cumulative probabilities
 
-summary(original_scale_result) # Results are back-transformed from the log scale
+summary(original_scale_result_exp1) # Results are back-transformed from the log scale
 
 
 # ### Heteroscedasticity checks ###  --------------------------------------
@@ -1088,6 +1257,22 @@ summary(zigam_26_exp2_adisPT_ziPT_Ba_ID)
 summary(zigam_27_exp2_adisPT_ziPT_ID)
 summary(zigam_28_exp2_adisPT_ziPT)
 
+
+# Estimated marginal means #
+# Log Scale #
+emmeans_result_exp2 <- emmeans(zigam_21_exp2_int_adisPT_ziPT_ID, ~ Phase * Treatment)
+summary(emmeans_result_exp2) # Results are given on the log (not the response) scale
+
+# Original Scale #
+original_scale_result_exp2 <- summary(emmeans_result_exp2, type = "response") # The type argument specifies the scale on which to return the results.
+# Setting type = "response" tells the summary function to transform the estimated marginal means from the link function scale (linear predictor) back to the original response scale.
+# type = link           :returns the estimated marginal means (EMMs) on the scale of the linear predictor
+# type = response       :returns the EMMs on the original response scale, which means the results are transformed back from the link scale to the original scale of the response variable
+# type = prob           :provides the estimated probabilities when the model involves a binary outcome
+# type = lp or linpred  :similar to "link" 
+# type = cumulative     :Used in ordinal models to provide cumulative probabilities
+
+summary(original_scale_result_exp2) # Results are back-transformed from the log scale
 
 # ### Heteroscedasticity checks ###  --------------------------------------
 

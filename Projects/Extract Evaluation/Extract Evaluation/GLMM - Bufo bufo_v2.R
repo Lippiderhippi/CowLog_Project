@@ -23,7 +23,7 @@ if (!require("pacman")) install.packages("pacman")
 # p_load() from {pacman} checks to see if a package is installed.
 # If not it attempts to install the package and then loads it. 
 # It can also be applied to several packages at once (see below)
-pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot, reshape2, broom.mixed, ggplot2)
+pacman::p_load(dplyr, tidyverse, emmeans, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot, reshape2, broom.mixed, ggplot2)
 getwd()
 setwd("C:/Users/Lippi/Desktop/GitRepository/Projects/Extract Evaluation/Extract Evaluation")
 
@@ -642,6 +642,24 @@ summary(zigam_26_exp1_adisPT_zi1_Ba_ID)
 summary(zigam_27_exp1_adisPT_zi1_ID)
 summary(zigam_28_exp1_adisPT_zi1)
 
+
+# Estimated marginal means #
+# Log Scale #
+emmeans_result_exp1 <- emmeans(zigam_21_exp1_int_adisPT_zi1_ID, ~ Phase * Treatment)
+summary(emmeans_result_exp1) # Results are given on the log (not the response) scale
+
+# Original Scale #
+original_scale_result_exp1 <- summary(emmeans_result_exp1, type = "response") # The type argument specifies the scale on which to return the results.
+# Setting type = "response" tells the summary function to transform the estimated marginal means from the link function scale (linear predictor) back to the original response scale.
+# type = link           :returns the estimated marginal means (EMMs) on the scale of the linear predictor
+# type = response       :returns the EMMs on the original response scale, which means the results are transformed back from the link scale to the original scale of the response variable
+# type = prob           :provides the estimated probabilities when the model involves a binary outcome
+# type = lp or linpred  :similar to "link" 
+# type = cumulative     :Used in ordinal models to provide cumulative probabilities
+
+summary(original_scale_result_exp1) # Results are back-transformed from the log scale
+
+
 # ### Heteroscedasticity checks ###  --------------------------------------
 
 # DHARMa residuals
@@ -1004,6 +1022,23 @@ summary(zigam_25_exp2_mdisPT_zi1)
 summary(zigam_26_exp2_adisPT_zi1_Ba_ID)
 summary(zigam_27_exp2_adisPT_zi1_ID)
 summary(zigam_28_exp2_adisPT_zi1)
+
+
+# Estimated marginal means #
+# Log Scale #
+emmeans_result_exp2 <- emmeans(zigam_21_exp2_int_adisPT_zi1_ID, ~ Phase * Treatment)
+summary(emmeans_result_exp2) # Results are given on the log (not the response) scale
+
+# Original Scale #
+original_scale_result_exp2 <- summary(emmeans_result_exp2, type = "response") # The type argument specifies the scale on which to return the results.
+# Setting type = "response" tells the summary function to transform the estimated marginal means from the link function scale (linear predictor) back to the original response scale.
+# type = link           :returns the estimated marginal means (EMMs) on the scale of the linear predictor
+# type = response       :returns the EMMs on the original response scale, which means the results are transformed back from the link scale to the original scale of the response variable
+# type = prob           :provides the estimated probabilities when the model involves a binary outcome
+# type = lp or linpred  :similar to "link" 
+# type = cumulative     :Used in ordinal models to provide cumulative probabilities
+
+summary(original_scale_result_exp2) # Results are back-transformed from the log scale
 
 
 # ### Heteroscedasticity checks ###  --------------------------------------
