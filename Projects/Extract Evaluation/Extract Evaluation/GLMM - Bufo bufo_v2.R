@@ -24,7 +24,8 @@ if (!require("pacman")) install.packages("pacman")
 # If not it attempts to install the package and then loads it. 
 # It can also be applied to several packages at once (see below)
 pacman::p_load(dplyr, tidyverse, glmmTMB, performance, lme4, patchwork, DHARMa, FactoMineR, interactions, sjPlot, reshape2, broom.mixed, ggplot2)
-
+getwd()
+setwd("C:/Users/Lippi/Desktop/GitRepository/Projects/Extract Evaluation/Extract Evaluation")
 
 # ### 1. Load the data #### ------------------------------------------------
 

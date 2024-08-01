@@ -28,6 +28,8 @@ pacman::p_load(dplyr, tidyverse,emmeans, glmmTMB, performance, lme4, patchwork, 
 
 
 # ### 1. Load the data #### ------------------------------------------------
+getwd() # Check what the working directory is (should be the one where the excelfiles are in)
+setwd("C:/Users/Lippi/Desktop/GitRepository/Projects/Extract Evaluation/Extract Evaluation") # Changes the working directory to where the excel files ar in
 
 df_Rana_L <- read.csv("0. Extract Evaluation_All Rana_v3_L.csv")
 
@@ -83,9 +85,9 @@ summary_per_treatment
 # This is OPTIONAL and was not done for the analysis of this data set
 
 # This excludes all data for Treatment "95C" or any other
-filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Treatment != "95C")
+#filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Treatment != "95C")
 # This excludes all data for Phase "Post" or any other
-filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Phase != "Post")
+#filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Phase != "Post")
 
 
 
@@ -93,10 +95,10 @@ filtered_df_Rana_L <- filtered_df_Rana_L %>% filter(Phase != "Post")
 # This is OPTIONAL and was not done for the analysis of this data set
 
 # Combining Phases #
-filtered_df_Rana_L$Combined_Phase <- ifelse(filtered_df_Rana_L$Phase %in% c("Stim", "Post"), "Stim_Post", "Pre")
+#filtered_df_Rana_L$Combined_Phase <- ifelse(filtered_df_Rana_L$Phase %in% c("Stim", "Post"), "Stim_Post", "Pre")
 
 # Combining Treatments #
-filtered_df_Rana_L$Combined_Treatment <- ifelse(data$Treatment %in% c("boiled", "frozen", "aged"), "processed", "unprocessed")
+#filtered_df_Rana_L$Combined_Treatment <- ifelse(data$Treatment %in% c("boiled", "frozen", "aged"), "processed", "unprocessed")
 
 # This essentially create a binary or categorical variable that distinguishes between two conditions:
   # "Pre"-Phase: Represents the period before any stimulus is introduced.
@@ -124,8 +126,8 @@ str(df_Rana_exp2)
 
 
 # ### OPTIONAL - Centering to reducing collinearity ### ------------------------------
-df_Rana_exp1$Phase_centered <- scale(df_Rana_exp1$Phase, center = TRUE, scale = FALSE)
-df_Rana_exp1$Treatment_centered <- scale(df_Rana_exp1$Treatment, center = TRUE, scale = FALSE)
+#df_Rana_exp1$Phase_centered <- scale(df_Rana_exp1$Phase, center = TRUE, scale = FALSE)
+#df_Rana_exp1$Treatment_centered <- scale(df_Rana_exp1$Treatment, center = TRUE, scale = FALSE)
 
 
 # ### Counting abundances of "Zero" ### ------------------------------------
@@ -654,6 +656,71 @@ summary(zigam_26_exp1_adisPT_ziPT_Ba_ID)
 summary(zigam_27_exp1_adisPT_ziPT_ID)
 summary(zigam_28_exp1_adisPT_ziPT)
 
+
+# ### Extracting values from the model to report ### ---------------------------------------
+# Extract coefficients
+
+coef_conditional <- fixef(zigam_21_exp1_int_adisPT_ziPT_ID)$cond  # Coefficients for the conditional zigam_21_exp1_int_adisPT_ziPT_ID
+coef_zero_inflation <- fixef(zigam_21_exp1_int_adisPT_ziPT_ID)$zi  # Coefficients for the zero-inflation zigam_21_exp1_int_adisPT_ziPT_ID
+coef_dispersion <- fixef(zigam_21_exp1_int_adisPT_ziPT_ID)$disp   # Coefficients for the dispersion zigam_21_exp1_int_adisPT_ziPT_ID
+
+# Transform coefficients from log scale to original scale
+exp_coef_conditional <- exp(coef_conditional)
+exp_coef_zero_inflation <- exp(coef_zero_inflation)
+exp_coef_dispersion <- exp(coef_dispersion)
+
+# Display transformed coefficients
+exp_coef_conditional
+exp_coef_zero_inflation
+exp_coef_dispersion
+
+
+# Extract coefficients
+Phase <- coef_conditional["(Phase.L)"]
+
+# Find interaction terms (assuming they are in the format "Phase.L:TreatmentBFT")
+interaction_terms <- grep(":", names(coef_conditional), value = TRUE)
+
+# Function to calculate interaction effects
+calculate_interaction_effect <- function(interaction) {
+  # Split interaction term into its components
+  terms <- strsplit(interaction, ":")[[1]]
+  
+  # Calculate combined effect
+  combined_effect <- exp(Phase + 
+                           coef_conditional[terms[1]] + 
+                           coef_conditional[terms[2]] + 
+                           coef_conditional[interaction])
+  
+  return(combined_effect)
+}
+
+# Compute and display interaction effects
+interaction_effects <- sapply(interaction_terms, calculate_interaction_effect)
+print("Interaction Effects (Original Scale):")
+print(interaction_effects)
+
+???
+exp(-0.149 - 0.174)
+???
+
+# Estimated marginal means #
+# Log Scale #
+emmeans_result <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment)
+summary(emmeans_result) # Results are given on the log (not the response) scale
+
+# Original Scale #
+original_scale_result <- summary(emmeans_result, type = "response") # The type argument specifies the scale on which to return the results.
+# Setting type = "response" tells the summary function to transform the estimated marginal means from the link function scale (linear predictor) back to the original response scale.
+# type = link           :returns the estimated marginal means (EMMs) on the scale of the linear predictor
+# type = response       :returns the EMMs on the original response scale, which means the results are transformed back from the link scale to the original scale of the response variable
+# type = prob           :provides the estimated probabilities when the model involves a binary outcome
+# type = lp or linpred  :similar to "link" 
+# type = cumulative     :Used in ordinal models to provide cumulative probabilities
+
+summary(original_scale_result) # Results are back-transformed from the log scale
+
+
 # ### Heteroscedasticity checks ###  --------------------------------------
 
 # DHARMa residuals
@@ -667,13 +734,6 @@ plotResiduals(s1, df_Rana_exp1$Treatment, rank  = FALSE)
 
 
 
-# ### Extracting values from the model to report ### ---------------------------------------
-
-# Estimated marginal means #
-emmeans_result <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment)
-summary(emmeans_result) # Results are given on the log (not the response) scale
-original_scale_result <- summary(emmeans_result, type = "response")
-summary(original_scale_result) # Results are back-transformed from the log scale
 
 
 
