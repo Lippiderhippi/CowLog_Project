@@ -1298,9 +1298,9 @@ plotConventionalResiduals(zigam_21_exp1_int_adisPT_ziPT_ID)
 
 # Boxplots #
 Box_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
-  geom_boxplot(size = 0.1, alpha = 0) +  # Adjust alpha for overlay visibility
+  geom_boxplot(size = 0.1, alpha = 0.3) +  # Adjust alpha for overlay visibility
   facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(0, 150)) +
+  scale_y_continuous(limits = c(0, 200)) +
   labs(title = "",
        x = "",
        y = "Active Seconds \n [s]") +
@@ -1374,6 +1374,106 @@ combined_plot <- Box_Int_combined / Zi_exp1 + plot_layout(ncol = 1, heights = c(
 # Display combined plot
 print(combined_plot)
 
+# ### Experiment 1 - Boxplot & EMMs + Zero-Inflation ### -----------
+
+# Calculate Estimated Marginal Means #
+# Log Scale #
+emmeans_result_exp1 <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment)
+summary(emmeans_result_exp1)
+# Original Scale #
+original_scale_result_exp1 <- summary(emmeans_result_exp1, type = "response") # The type argument specifies the scale on which to return the results.
+# Setting type = "response" tells the summary function to transform the estimated marginal means from the link function scale (linear predictor) back to the original response scale.
+summary(original_scale_result_exp1)
+
+
+# Convert to data frame for easier plotting
+df_emm_exp1 <- as.data.frame(original_scale_result_exp1)
+# Check colum names and rename them (see below). 
+# I did this because I got an error saying "Active_seconds" was not found.
+# In theroy this should not cause any problems because each layer "df_rana_exp1" and "df_emm_exp1" were given the correct colum names for the values.
+# For "df_Rana_exp1"  = Active_seconds
+# For "df_emm_exp1"   = response
+# Because of this annoying error I just renamed the colums in "df_emm_exp1" to include "Active_seconds"
+# Now the code stops bitching around...
+str(df_emm_exp1) 
+names(df_emm_exp1)
+colnames(df_emm_exp1) <- c("Phase", "Treatment", "Active_seconds", "SE", "df", "Lower_CI", "Upper_CI") # Renaming the colums
+df_emm_exp1$Phase <- factor(df_emm_exp1$Phase, ordered = TRUE)
+
+# Plot for Boxplots with Emms
+Box_Emm_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 0.1, alpha = 0.3) +  # Box plot for original data
+  geom_point(data = df_emm_exp1, aes(x = Phase, y = Active_seconds, color = Treatment), size = 3, shape = 21) +  # EMM points
+  geom_smooth(linewidth = 1, alpha = 1, method = "lm", se = FALSE, data = df_emm_exp1, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment)) +
+  geom_errorbar(data = df_emm_exp1, aes(x = Phase, ymin = Lower_CI, ymax = Upper_CI, color = Treatment), width = 0.2) +  # Error bars
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+ scale_y_continuous(limits = c(0, 200)) +
+  labs(title = "",
+       x = "",
+       y = "Active Seconds \n [s]") +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
+
+# Extracting Values from Model predictions #
+# Conditional model value predictions
+#pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+# Zero-inflation probabilities value predictions
+pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+
+#Create a new dataframe for calculations and subsequent plotting
+df_pred_exp1 <- data.frame(
+  Phase = df_Rana_exp1$Phase,
+  Treatment = df_Rana_exp1$Treatment,
+  #Active_seconds = pred_cond_exp1$fit,
+  #Active_seconds_se = pred_cond_exp1$se.fit,
+  ZeroInflation = pred_zi_exp1$fit,
+  ZeroInflation_se = pred_zi_exp1$se.fit)
+
+df_pred_exp1$Phase <- factor(df_pred_exp1$Phase, ordered = TRUE)
+
+#df_pred_act_exp1 <- df_pred_exp1 %>% 
+  #select(Phase, Treatment, Active_seconds, Active_seconds_se)
+
+df_pred_zi_exp1 <- df_pred_exp1 %>% 
+  select(Phase, Treatment, ZeroInflation, ZeroInflation_se)
+
+# Calculate means and standard errors for each combination of Treatment and Phase
+#df_calpred_act_exp1 <- df_pred_act_exp1 %>%
+ # group_by(Treatment, Phase) %>%
+ # summarise(Active_seconds = mean(Active_seconds, na.rm = TRUE),
+          #  Active_seconds_se = mean(Active_seconds_se, na.rm = TRUE))
+
+df_calpred_zi_exp1 <- df_pred_zi_exp1 %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_zi_prob = mean(ZeroInflation, na.rm = TRUE),
+            mean_zi_prob_se = mean(ZeroInflation_se, na.rm = TRUE))
+
+# Plot for Zero Inflation Probabilities
+Zi_exp1 <- ggplot(df_calpred_zi_exp1, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
+  geom_smooth(linewidth = 1, method = "lm", se = FALSE) +
+  geom_point(size = 2) +
+  geom_errorbar(linewidth = 1, width = 0.2, aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se)) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+  scale_y_continuous(limits = c(-0.05, 1)) +
+  labs(
+    x = "Phase",
+    y = "Propability of freezing \n [mean +SE]",
+    title = ""
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+# Combine plots using patchwork
+combined_plot <- Box_Emm_exp1 / Zi_exp1 + plot_layout(ncol = 1, heights = c(1, 1))
+
+# Display combined plot
+print(combined_plot)
+
+# Print individual the plots
+print(Box_Emm_exp1)
+print(Zi_exp1)
+
 
 ### Plot the Marginal Effects ###########################################
 
@@ -1402,6 +1502,7 @@ print(Plot_Marginal_Effects_Faceted)
 
 # Print the plot
 print(Plot_Marginal_Effects)
+
 
 
 # ### Experiment 2 - Boxplot & Interaction + Zero-Inflation ### -----------
