@@ -362,7 +362,7 @@ zigam_20_exp1_int_adisPT_ziPT_Ba_ID      <- glmmTMB(Active_seconds ~ Phase * Tre
                                                    family = ziGamma(link = "log"),
                                                    data = df_Rana_exp1)
 
-zigam_21_exp1_int_adisPT_ziPT_ID         <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+zigam_21_exp1_int_adisPT_ziPT_ID_Rana         <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
                                                     dispformula = ~ Phase + Treatment,
                                                       ziformula = ~ Phase + Treatment + (1 | Individual_Total),
                                                    family = ziGamma(link = "log"),
@@ -439,7 +439,7 @@ compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, zigam
 
 # Models 5th with dispersion #
 compare_performance(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID, zigam_18_exp1_int_mdisPT_ziPT_ID, zigam_19_exp1_int_mdisPT_ziPT,
-                    zigam_20_exp1_int_adisPT_ziPT_Ba_ID, zigam_21_exp1_int_adisPT_ziPT_ID, zigam_22_exp1_int_adisPT_ziPT,
+                    zigam_20_exp1_int_adisPT_ziPT_Ba_ID, zigam_21_exp1_int_adisPT_ziPT_ID_Rana, zigam_22_exp1_int_adisPT_ziPT,
                     zigam_23_exp1_mdisPT_ziPT_Ba_ID, zigam_24_exp1_mdisPT_ziPT_ID, zigam_25_exp1_mdisPT_ziPT,
                     zigam_26_exp1_adisPT_ziPT_Ba_ID, zigam_27_exp1_adisPT_ziPT_ID, zigam_28_exp1_adisPT_ziPT,
                     rank = T)
@@ -454,7 +454,7 @@ plot(compare_performance(zigam_1_exp1_int_ziPT_Ba_ID, zigam_2_exp1_int_ziPT_ID, 
 
 # Models 5th with dispersion #
 plot(compare_performance(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID, zigam_18_exp1_int_mdisPT_ziPT_ID, zigam_19_exp1_int_mdisPT_ziPT,
-                         zigam_20_exp1_int_adisPT_ziPT_Ba_ID, zigam_21_exp1_int_adisPT_ziPT_ID, zigam_22_exp1_int_adisPT_ziPT,
+                         zigam_20_exp1_int_adisPT_ziPT_Ba_ID, zigam_21_exp1_int_adisPT_ziPT_ID_Rana, zigam_22_exp1_int_adisPT_ziPT,
                          zigam_23_exp1_mdisPT_ziPT_Ba_ID, zigam_24_exp1_mdisPT_ziPT_ID, zigam_25_exp1_mdisPT_ziPT,
                          zigam_26_exp1_adisPT_ziPT_Ba_ID, zigam_27_exp1_adisPT_ziPT_ID, zigam_28_exp1_adisPT_ziPT))
 
@@ -523,7 +523,7 @@ model_performance(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID)
 model_performance(zigam_18_exp1_int_mdisPT_ziPT_ID)
 model_performance(zigam_19_exp1_int_mdisPT_ziPT)
 model_performance(zigam_20_exp1_int_adisPT_ziPT_Ba_ID)
-model_performance(zigam_21_exp1_int_adisPT_ziPT_ID)
+model_performance(zigam_21_exp1_int_adisPT_ziPT_ID_Rana)
 model_performance(zigam_22_exp1_int_adisPT_ziPT)
 model_performance(zigam_23_exp1_mdisPT_ziPT_Ba_ID)
 model_performance(zigam_24_exp1_mdisPT_ziPT_ID)
@@ -587,7 +587,7 @@ check_model(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID)
 check_model(zigam_18_exp1_int_mdisPT_ziPT_ID)
 check_model(zigam_19_exp1_int_mdisPT_ziPT)
 check_model(zigam_20_exp1_int_adisPT_ziPT_Ba_ID)
-check_model(zigam_21_exp1_int_adisPT_ziPT_ID)
+check_model(zigam_21_exp1_int_adisPT_ziPT_ID_Rana)
 check_model(zigam_22_exp1_int_adisPT_ziPT)
 check_model(zigam_23_exp1_mdisPT_ziPT_Ba_ID)
 check_model(zigam_24_exp1_mdisPT_ziPT_ID)
@@ -647,7 +647,7 @@ summary(zigam_17_exp1_int_mdisPT_ziPT_Ba_ID)
 summary(zigam_18_exp1_int_mdisPT_ziPT_ID)
 summary(zigam_19_exp1_int_mdisPT_ziPT)
 summary(zigam_20_exp1_int_adisPT_ziPT_Ba_ID)
-summary(zigam_21_exp1_int_adisPT_ziPT_ID)
+summary(zigam_21_exp1_int_adisPT_ziPT_ID_Rana)
 summary(zigam_22_exp1_int_adisPT_ziPT)
 summary(zigam_23_exp1_mdisPT_ziPT_Ba_ID)
 summary(zigam_24_exp1_mdisPT_ziPT_ID)
@@ -664,7 +664,7 @@ summary(zigam_28_exp1_adisPT_ziPT)
 
 ### 1st version ###
 
-model_summary <- summary(zigam_21_exp1_int_adisPT_ziPT_ID)
+model_summary <- summary(zigam_21_exp1_int_adisPT_ziPT_ID_Rana)
 
 # Extract coefficients and standard errors for the conditional model
 coef_values_cond <- model_summary$coefficients$cond[, "Estimate"]
@@ -775,7 +775,7 @@ for (i in seq_along(exp_and_se_disp)) {
 
 ### version 3 ###
 
-model_summary <- summary(zigam_21_exp1_int_adisPT_ziPT_ID)
+model_summary <- summary(zigam_21_exp1_int_adisPT_ziPT_ID_Rana)
 
 # Function to calculate exponentiated coefficient and its standard error
 calculate_exp_and_se <- function(coef, se) {
@@ -875,7 +875,7 @@ exp(-0.149 - 0.527)
 
 # Estimated marginal means #
 # Log Scale #
-emmeans_result_exp1 <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment)
+emmeans_result_exp1 <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, ~ Phase * Treatment)
 summary(emmeans_result_exp1) # Results are given on the log (not the response) scale
 
 # Original Scale #
@@ -893,7 +893,7 @@ summary(original_scale_result_exp1) # Results are back-transformed from the log 
 # ### Heteroscedasticity checks ###  --------------------------------------
 
 # DHARMa residuals
-plot(s1 <- simulateResiduals(zigam_21_exp1_int_adisPT_ziPT_ID))
+plot(s1 <- simulateResiduals(zigam_21_exp1_int_adisPT_ziPT_ID_Rana))
 par(mfrow=c(1,2))
 plotResiduals(s1, df_Rana_exp1$Phase, rank = FALSE)
 plotResiduals(s1, df_Rana_exp1$Treatment, rank  = FALSE)
@@ -1039,7 +1039,7 @@ zigam_20_exp2_int_adisPT_ziPT_Ba_ID      <- glmmTMB(Active_seconds ~ Phase * Tre
                                                    family = ziGamma(link = "log"),
                                                    data = df_Rana_exp2)
 
-zigam_21_exp2_int_adisPT_ziPT_ID         <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
+zigam_21_exp2_int_adisPT_ziPT_ID_Rana         <- glmmTMB(Active_seconds ~ Phase * Treatment + (1 | Individual_Total),
                                                    dispformula = ~ Phase + Treatment,
                                                    ziformula = ~ Phase + Treatment + (1 | Individual_Total),
                                                    family = ziGamma(link = "log"),
@@ -1108,7 +1108,7 @@ compare_performance(zigam_1_exp2_int_ziPT_Ba_ID, zigam_2_exp2_int_ziPT_ID, zigam
 # Models 5th with dispersion #
 compare_performance(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID, zigam_18_exp2_int_mdisPT_ziPT_ID, zigam_19_exp2_int_mdisPT_ziPT,
                     #zigam_20_exp2_int_adisPT_ziPT_Ba_ID, 
-                    zigam_21_exp2_int_adisPT_ziPT_ID, zigam_22_exp2_int_adisPT_ziPT,
+                    zigam_21_exp2_int_adisPT_ziPT_ID_Rana, zigam_22_exp2_int_adisPT_ziPT,
                     zigam_23_exp2_mdisPT_ziPT_Ba_ID, zigam_24_exp2_mdisPT_ziPT_ID, zigam_25_exp2_mdisPT_ziPT,
                     zigam_26_exp2_adisPT_ziPT_Ba_ID, zigam_27_exp2_adisPT_ziPT_ID, zigam_28_exp2_adisPT_ziPT,
                     rank = T)
@@ -1122,7 +1122,7 @@ plot(compare_performance(zigam_1_exp2_int_ziPT_Ba_ID, zigam_2_exp2_int_ziPT_ID, 
 
 # Models 5th with dispersion #
 plot(compare_performance(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID, zigam_18_exp2_int_mdisPT_ziPT_ID, zigam_19_exp2_int_mdisPT_ziPT,
-                         zigam_20_exp2_int_adisPT_ziPT_Ba_ID, zigam_21_exp2_int_adisPT_ziPT_ID, zigam_22_exp2_int_adisPT_ziPT,
+                         zigam_20_exp2_int_adisPT_ziPT_Ba_ID, zigam_21_exp2_int_adisPT_ziPT_ID_Rana, zigam_22_exp2_int_adisPT_ziPT,
                          zigam_23_exp2_mdisPT_ziPT_Ba_ID, zigam_24_exp2_mdisPT_ziPT_ID, zigam_25_exp2_mdisPT_ziPT,
                          zigam_26_exp2_adisPT_ziPT_Ba_ID, zigam_27_exp2_adisPT_ziPT_ID, zigam_28_exp2_adisPT_ziPT))
 
@@ -1162,7 +1162,7 @@ model_performance(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID)
 model_performance(zigam_18_exp2_int_mdisPT_ziPT_ID)
 model_performance(zigam_19_exp2_int_mdisPT_ziPT)
 model_performance(zigam_20_exp2_int_adisPT_ziPT_Ba_ID)
-model_performance(zigam_21_exp2_int_adisPT_ziPT_ID)
+model_performance(zigam_21_exp2_int_adisPT_ziPT_ID_Rana)
 model_performance(zigam_22_exp2_int_adisPT_ziPT)
 model_performance(zigam_23_exp2_mdisPT_ziPT_Ba_ID)
 model_performance(zigam_24_exp2_mdisPT_ziPT_ID)
@@ -1205,7 +1205,7 @@ check_model(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID)
 check_model(zigam_18_exp2_int_mdisPT_ziPT_ID)
 check_model(zigam_19_exp2_int_mdisPT_ziPT)
 check_model(zigam_20_exp2_int_adisPT_ziPT_Ba_ID)
-check_model(zigam_21_exp2_int_adisPT_ziPT_ID)
+check_model(zigam_21_exp2_int_adisPT_ziPT_ID_Rana)
 check_model(zigam_22_exp2_int_adisPT_ziPT)
 check_model(zigam_23_exp2_mdisPT_ziPT_Ba_ID)
 check_model(zigam_24_exp2_mdisPT_ziPT_ID)
@@ -1248,7 +1248,7 @@ summary(zigam_17_exp2_int_mdisPT_ziPT_Ba_ID)
 summary(zigam_18_exp2_int_mdisPT_ziPT_ID)
 summary(zigam_19_exp2_int_mdisPT_ziPT)
 summary(zigam_20_exp2_int_adisPT_ziPT_Ba_ID)
-summary(zigam_21_exp2_int_adisPT_ziPT_ID)
+summary(zigam_21_exp2_int_adisPT_ziPT_ID_Rana)
 summary(zigam_22_exp2_int_adisPT_ziPT)
 summary(zigam_23_exp2_mdisPT_ziPT_Ba_ID)
 summary(zigam_24_exp2_mdisPT_ziPT_ID)
@@ -1260,7 +1260,7 @@ summary(zigam_28_exp2_adisPT_ziPT)
 
 # Estimated marginal means #
 # Log Scale #
-emmeans_result_exp2 <- emmeans(zigam_21_exp2_int_adisPT_ziPT_ID, ~ Phase * Treatment)
+emmeans_result_exp2 <- emmeans(zigam_21_exp2_int_adisPT_ziPT_ID_Rana, ~ Phase * Treatment)
 summary(emmeans_result_exp2) # Results are given on the log (not the response) scale
 
 # Original Scale #
@@ -1277,14 +1277,14 @@ summary(original_scale_result_exp2) # Results are back-transformed from the log 
 # ### Heteroscedasticity checks ###  --------------------------------------
 
 # DHARMa residuals
-plot(s1 <- simulateResiduals(zigam_21_exp1_int_adisPT_ziPT_ID),refit = T)
+plot(s1 <- simulateResiduals(zigam_21_exp1_int_adisPT_ziPT_ID_Rana),refit = T)
 par(mfrow=c(1,2))
 plotResiduals(s1, df_Rana_exp2$Phase, rank = FALSE)
 plotResiduals(s1, df_Rana_exp2$Treatment, rank  = FALSE)
 
 testZeroInflation(zigam_27_exp2_adisPT_ziPT_ID)
 
-plotConventionalResiduals(zigam_21_exp1_int_adisPT_ziPT_ID)
+plotConventionalResiduals(zigam_21_exp1_int_adisPT_ziPT_ID_Rana)
 
 # under H0 (perfect model), we would expect those boxes to range homogeneously from 0.25-0.75. 
 # To see whether there are deviations from this expectation, the plot calculates a test for uniformity per box, and a test for homgeneity of variances between boxes. 
@@ -1292,6 +1292,224 @@ plotConventionalResiduals(zigam_21_exp1_int_adisPT_ziPT_ID)
 
 
 # ### Data Plots ### ------------------------------------------------------
+
+
+# ### Experiment 1 - Boxplot & EMMs + Zero-Inflation ### -----------
+
+# Calculate Estimated Marginal Means #
+# Log Scale #
+emmeans_result_exp1_Rana <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, ~ Phase * Treatment)
+summary(emmeans_result_exp1_Rana)
+# Original Scale #
+original_scale_result_exp1_Rana <- summary(emmeans_result_exp1_Rana, type = "response") # The type argument specifies the scale on which to return the results.
+# Setting type = "response" tells the summary function to transform the estimated marginal means from the link function scale (linear predictor) back to the original response scale.
+summary(original_scale_result_exp1_Rana)
+
+
+# Convert to data frame for easier plotting
+df_emm_exp1_Rana <- as.data.frame(original_scale_result_exp1_Rana)
+# Check colum names and rename them (see below). 
+# I did this because I got an error saying "Active_seconds" was not found.
+# In theroy this should not cause any problems because each layer "df_rana_exp1" and "df_emm_exp1" were given the correct colum names for the values.
+# For "df_Rana_exp1"  = Active_seconds
+# For "df_emm_exp1"   = response
+# Because of this annoying error I just renamed the colums in "df_emm_exp1" to include "Active_seconds"
+# Now the code stops bitching around...
+str(df_emm_exp1_Rana) 
+names(df_emm_exp1_Rana)
+colnames(df_emm_exp1_Rana) <- c("Phase", "Treatment", "Active_seconds", "SE", "df", "Lower_CI", "Upper_CI") # Renaming the colums
+df_emm_exp1_Rana$Phase <- factor(df_emm_exp1_Rana$Phase, ordered = TRUE)
+
+# Plot for Boxplots with Emms
+Box_Emm_exp1_Rana <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 0.1, alpha = 0.3, outlier.shape = 16, outlier.color = "black", outlier.size = 1) +  # Box plot for original data
+  geom_point(data = df_emm_exp1_Rana, aes(x = Phase, y = Active_seconds, color = Treatment), size = 1, shape = 21) +  # EMM points
+  geom_smooth(linewidth = 0.5, alpha = 1, method = "lm", se = FALSE, data = df_emm_exp1_Rana, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment)) +
+  geom_errorbar(data = df_emm_exp1_Rana, aes(x = Phase, ymin = Lower_CI, ymax = Upper_CI, color = Treatment), width = 0.2) +  # Error bars
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+  scale_y_continuous(limits = c(0, 200)) +
+  labs(title = "",
+       x = "",
+       y = "Active Seconds \n [s]") +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
+
+# Extracting Values from Model predictions #
+# Conditional model value predictions
+#pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "conditional", se.fit = TRUE)
+# Zero-inflation probabilities value predictions
+pred_zi_exp1_Rana <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "zprob", se.fit = TRUE)
+
+#Create a new dataframe for calculations and subsequent plotting
+df_pred_exp1_Rana <- data.frame(
+  Phase = df_Rana_exp1$Phase,
+  Treatment = df_Rana_exp1$Treatment,
+  #Active_seconds = pred_cond_exp1$fit,
+  #Active_seconds_se = pred_cond_exp1$se.fit,
+  ZeroInflation = pred_zi_exp1_Rana$fit,
+  ZeroInflation_se = pred_zi_exp1_Rana$se.fit)
+
+df_pred_exp1_Rana$Phase <- factor(df_pred_exp1_Rana$Phase, ordered = TRUE)
+
+#df_pred_act_exp1 <- df_pred_exp1 %>% 
+#select(Phase, Treatment, Active_seconds, Active_seconds_se)
+
+df_pred_zi_exp1_Rana <- df_pred_exp1_Rana %>% 
+  select(Phase, Treatment, ZeroInflation, ZeroInflation_se)
+
+# Calculate means and standard errors for each combination of Treatment and Phase
+#df_calpred_act_exp1 <- df_pred_act_exp1 %>%
+# group_by(Treatment, Phase) %>%
+# summarise(Active_seconds = mean(Active_seconds, na.rm = TRUE),
+#  Active_seconds_se = mean(Active_seconds_se, na.rm = TRUE))
+
+df_calpred_zi_exp1_Rana <- df_pred_zi_exp1_Rana %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_zi_prob = mean(ZeroInflation, na.rm = TRUE),
+            mean_zi_prob_se = mean(ZeroInflation_se, na.rm = TRUE))
+
+# Plot for Zero Inflation Probabilities
+Zi_exp1_Rana <- ggplot(df_calpred_zi_exp1_Rana, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
+  geom_smooth(linewidth = 0.5, method = "lm", se = FALSE) +
+  geom_point(size = 1) +
+  geom_errorbar(linewidth = 0.5, width = 0.2, aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se)) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+  scale_y_continuous(limits = c(-0.05, 1)) +
+  labs(
+    x = "Phase",
+    y = "Propability of freezing \n [mean +SE]",
+    title = ""
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+# Combine plots using patchwork
+combined_plot_exp1_Rana <- Box_Emm_exp1_Rana / Zi_exp1_Rana + plot_layout(ncol = 1, heights = c(1, 1))
+
+# Display combined plot
+print(combined_plot_exp1_Rana)
+
+# Print individual the plots
+print(Box_Emm_exp1_Rana)
+print(Zi_exp1_Rana)
+
+
+# ### Experiment 2 - Boxplot & EMMs + Zero-Inflation ### -----------
+
+# Calculate Estimated Marginal Means #
+# Log Scale #
+emmeans_result_exp2_Rana <- emmeans(zigam_21_exp2_int_adisPT_ziPT_ID_Rana, ~ Phase * Treatment)
+summary(emmeans_result_exp2_Rana)
+# Original Scale #
+original_scale_result_exp2_Rana <- summary(emmeans_result_exp2_Rana, type = "response") # The type argument specifies the scale on which to return the results.
+# Setting type = "response" tells the summary function to transform the estimated marginal means from the link function scale (linear predictor) back to the original response scale.
+summary(original_scale_result_exp2_Rana)
+
+
+# Convert to data frame for easier plotting
+df_emm_exp2_Rana <- as.data.frame(original_scale_result_exp2_Rana)
+# Check colum names and rename them (see below). 
+# I did this because I got an error saying "Active_seconds" was not found.
+# In theroy this should not cause any problems because each layer "df_rana_exp2" and "df_emm_exp2" were given the correct colum names for the values.
+# For "df_Rana_exp2"  = Active_seconds
+# For "df_emm_exp2"   = response
+# Because of this annoying error I just renamed the colums in "df_emm_exp2" to include "Active_seconds"
+# Now the code stops bitching around...
+str(df_emm_exp2_Rana) 
+names(df_emm_exp2_Rana)
+colnames(df_emm_exp2_Rana) <- c("Phase", "Treatment", "Active_seconds", "SE", "df", "Lower_CI", "Upper_CI") # Renaming the colums
+df_emm_exp2_Rana$Phase <- factor(df_emm_exp2_Rana$Phase, ordered = TRUE)
+
+# Plot for Boxplots with Emms
+Box_Emm_exp2_Rana <- ggplot(df_Rana_exp2, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
+  geom_boxplot(size = 0.1, alpha = 0.3, outlier.shape = 16, outlier.color = "black", outlier.size = 1) +  # Box plot for original data
+  geom_point(data = df_emm_exp2_Rana, aes(x = Phase, y = Active_seconds, color = Treatment), size = 1, shape = 21) +  # EMM points
+  geom_smooth(linewidth = 0.5, alpha = 1, method = "lm", se = FALSE, data = df_emm_exp2_Rana, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment)) +
+  geom_errorbar(data = df_emm_exp2_Rana, aes(x = Phase, ymin = Lower_CI, ymax = Upper_CI, color = Treatment), width = 0.2) +  # Error bars
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+  scale_y_continuous(limits = c(0, 200)) +
+  labs(title = "",
+       x = "",
+       y = "Active Seconds \n [s]") +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
+
+# Extracting Values from Model predictions #
+# Conditional model value predictions
+#pred_cond_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID_Rana, type = "conditional", se.fit = TRUE)
+# Zero-inflation probabilities value predictions
+pred_zi_exp2_Rana <- predict(zigam_21_exp2_int_adisPT_ziPT_ID_Rana, type = "zprob", se.fit = TRUE)
+
+#Create a new dataframe for calculations and subsequent plotting
+df_pred_exp2_Rana <- data.frame(
+  Phase = df_Rana_exp2$Phase,
+  Treatment = df_Rana_exp2$Treatment,
+  #Active_seconds = pred_cond_exp2$fit,
+  #Active_seconds_se = pred_cond_exp2$se.fit,
+  ZeroInflation = pred_zi_exp2_Rana$fit,
+  ZeroInflation_se = pred_zi_exp2_Rana$se.fit)
+
+df_pred_exp2_Rana$Phase <- factor(df_pred_exp2_Rana$Phase, ordered = TRUE)
+
+#df_pred_act_exp2 <- df_pred_exp2 %>% 
+#select(Phase, Treatment, Active_seconds, Active_seconds_se)
+
+df_pred_zi_exp2_Rana <- df_pred_exp2_Rana %>% 
+  select(Phase, Treatment, ZeroInflation, ZeroInflation_se)
+
+# Calculate means and standard errors for each combination of Treatment and Phase
+#df_calpred_act_exp2 <- df_pred_act_exp2 %>%
+# group_by(Treatment, Phase) %>%
+# summarise(Active_seconds = mean(Active_seconds, na.rm = TRUE),
+#  Active_seconds_se = mean(Active_seconds_se, na.rm = TRUE))
+
+df_calpred_zi_exp2_Rana <- df_pred_zi_exp2_Rana %>%
+  group_by(Treatment, Phase) %>%
+  summarise(mean_zi_prob = mean(ZeroInflation, na.rm = TRUE),
+            mean_zi_prob_se = mean(ZeroInflation_se, na.rm = TRUE))
+
+# Plot for Zero Inflation Probabilities
+Zi_exp2_Rana <- ggplot(df_calpred_zi_exp2_Rana, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
+  geom_smooth(linewidth = 0.5, method = "lm", se = FALSE) +
+  geom_point(size = 1) +
+  geom_errorbar(linewidth = 0.5, width = 0.2, aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se)) +
+  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
+  scale_y_continuous(limits = c(-0.05, 1)) +
+  labs(
+    x = "Phase",
+    y = "Propability of freezing \n [mean +SE]",
+    title = ""
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+# Combine plots using patchwork
+combined_plot_exp2_Rana <- Box_Emm_exp2_Rana / Zi_exp2_Rana + plot_layout(ncol = 1, heights = c(1, 1))
+
+# Display combined plot
+print(combined_plot_exp2_Rana)
+
+# Print individual the plots
+print(Box_Emm_exp2_Rana)
+print(Zi_exp2_Rana)
+
+### Combine two combined plots ###
+
+# Combine two combined plots side by side
+final_combined_plot_Rana <- combined_plot_exp1_Rana | combined_plot_exp2_Rana
+
+# Display the final combined plot
+print(final_combined_plot_Rana)
+
+
+# Combine all plots in a grid with 2 rows and 2 columns
+final_combined_plot_BufoRana <- (combined_plot_exp1_Bufo | combined_plot_exp2_Bufo) / (combined_plot_exp1_Rana | combined_plot_exp2_Rana)
+
+# Display the final combined plot
+print(final_combined_plot_BufoRana)
+
 
 
 # ### Experiment 1 - Boxplot & Interaction + Zero-Inflation ### -----------
@@ -1310,9 +1528,9 @@ Box_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treat
 
 # Extracting Values from Model predictions #
 # Conditional model value predictions
-pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities value predictions
-pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "zprob", se.fit = TRUE)
 
 #Create a new dataframe for calculations and subsequent plotting
 df_pred_exp1 <- data.frame(
@@ -1374,111 +1592,14 @@ combined_plot <- Box_Int_combined / Zi_exp1 + plot_layout(ncol = 1, heights = c(
 # Display combined plot
 print(combined_plot)
 
-# ### Experiment 1 - Boxplot & EMMs + Zero-Inflation ### -----------
-
-# Calculate Estimated Marginal Means #
-# Log Scale #
-emmeans_result_exp1 <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment)
-summary(emmeans_result_exp1)
-# Original Scale #
-original_scale_result_exp1 <- summary(emmeans_result_exp1, type = "response") # The type argument specifies the scale on which to return the results.
-# Setting type = "response" tells the summary function to transform the estimated marginal means from the link function scale (linear predictor) back to the original response scale.
-summary(original_scale_result_exp1)
 
 
-# Convert to data frame for easier plotting
-df_emm_exp1 <- as.data.frame(original_scale_result_exp1)
-# Check colum names and rename them (see below). 
-# I did this because I got an error saying "Active_seconds" was not found.
-# In theroy this should not cause any problems because each layer "df_rana_exp1" and "df_emm_exp1" were given the correct colum names for the values.
-# For "df_Rana_exp1"  = Active_seconds
-# For "df_emm_exp1"   = response
-# Because of this annoying error I just renamed the colums in "df_emm_exp1" to include "Active_seconds"
-# Now the code stops bitching around...
-str(df_emm_exp1) 
-names(df_emm_exp1)
-colnames(df_emm_exp1) <- c("Phase", "Treatment", "Active_seconds", "SE", "df", "Lower_CI", "Upper_CI") # Renaming the colums
-df_emm_exp1$Phase <- factor(df_emm_exp1$Phase, ordered = TRUE)
-
-# Plot for Boxplots with Emms
-Box_Emm_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treatment)) +
-  geom_boxplot(size = 0.1, alpha = 0.3) +  # Box plot for original data
-  geom_point(data = df_emm_exp1, aes(x = Phase, y = Active_seconds, color = Treatment), size = 3, shape = 21) +  # EMM points
-  geom_smooth(linewidth = 1, alpha = 1, method = "lm", se = FALSE, data = df_emm_exp1, aes(x = Phase, y = Active_seconds, group = Treatment, color = Treatment)) +
-  geom_errorbar(data = df_emm_exp1, aes(x = Phase, ymin = Lower_CI, ymax = Upper_CI, color = Treatment), width = 0.2) +  # Error bars
-  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
- scale_y_continuous(limits = c(0, 200)) +
-  labs(title = "",
-       x = "",
-       y = "Active Seconds \n [s]") +
-  theme_bw() +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
-
-# Extracting Values from Model predictions #
-# Conditional model value predictions
-#pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
-# Zero-inflation probabilities value predictions
-pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
-
-#Create a new dataframe for calculations and subsequent plotting
-df_pred_exp1 <- data.frame(
-  Phase = df_Rana_exp1$Phase,
-  Treatment = df_Rana_exp1$Treatment,
-  #Active_seconds = pred_cond_exp1$fit,
-  #Active_seconds_se = pred_cond_exp1$se.fit,
-  ZeroInflation = pred_zi_exp1$fit,
-  ZeroInflation_se = pred_zi_exp1$se.fit)
-
-df_pred_exp1$Phase <- factor(df_pred_exp1$Phase, ordered = TRUE)
-
-#df_pred_act_exp1 <- df_pred_exp1 %>% 
-  #select(Phase, Treatment, Active_seconds, Active_seconds_se)
-
-df_pred_zi_exp1 <- df_pred_exp1 %>% 
-  select(Phase, Treatment, ZeroInflation, ZeroInflation_se)
-
-# Calculate means and standard errors for each combination of Treatment and Phase
-#df_calpred_act_exp1 <- df_pred_act_exp1 %>%
- # group_by(Treatment, Phase) %>%
- # summarise(Active_seconds = mean(Active_seconds, na.rm = TRUE),
-          #  Active_seconds_se = mean(Active_seconds_se, na.rm = TRUE))
-
-df_calpred_zi_exp1 <- df_pred_zi_exp1 %>%
-  group_by(Treatment, Phase) %>%
-  summarise(mean_zi_prob = mean(ZeroInflation, na.rm = TRUE),
-            mean_zi_prob_se = mean(ZeroInflation_se, na.rm = TRUE))
-
-# Plot for Zero Inflation Probabilities
-Zi_exp1 <- ggplot(df_calpred_zi_exp1, aes(x = Phase, y = mean_zi_prob, group = Treatment, color = Treatment)) +
-  geom_smooth(linewidth = 1, method = "lm", se = FALSE) +
-  geom_point(size = 2) +
-  geom_errorbar(linewidth = 1, width = 0.2, aes(ymin = mean_zi_prob - mean_zi_prob_se, ymax = mean_zi_prob + mean_zi_prob_se)) +
-  facet_grid(rows = ~ Treatment, shrink = T, scales = "free_y", switch = "x", margins = F) +
-  scale_y_continuous(limits = c(-0.05, 1)) +
-  labs(
-    x = "Phase",
-    y = "Propability of freezing \n [mean +SE]",
-    title = ""
-  ) +
-  theme_bw() +
-  theme(legend.position = "none")
-
-# Combine plots using patchwork
-combined_plot <- Box_Emm_exp1 / Zi_exp1 + plot_layout(ncol = 1, heights = c(1, 1))
-
-# Display combined plot
-print(combined_plot)
-
-# Print individual the plots
-print(Box_Emm_exp1)
-print(Zi_exp1)
 
 
 ### Plot the Marginal Effects ###########################################
 
 # Calculate the marginal means
-emmeans_result <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID, ~ Phase * Treatment, type = "response")
+emmeans_result <- emmeans(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, ~ Phase * Treatment, type = "response")
 # Extract the marginal means and their confidence intervals
 df_emm <- as.data.frame(summary(emmeans_result))
 # Rename columns for clarity (optional)
@@ -1520,9 +1641,9 @@ Box_exp2 <- ggplot(df_Rana_exp2, aes(x = Phase, y = Active_seconds, fill = Treat
 
 # Extracting Values from Model predictions #
 # Conditional model value predictions
-pred_cond_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+pred_cond_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID_Rana, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities value predictions
-pred_zi_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp2 <- predict(zigam_21_exp2_int_adisPT_ziPT_ID_Rana, type = "zprob", se.fit = TRUE)
 
 #Create a new dataframe for calculations and subsequent plotting
 df_pred_exp2 <- data.frame(
@@ -1606,9 +1727,9 @@ Box_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treat
 
 
 # Conditional model predictions
-pred_cond_exp1    <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+pred_cond_exp1    <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities predictions
-pred_zi_exp1      <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp1      <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "zprob", se.fit = TRUE)
 
 
 df_pred_exp1 <- data.frame(
@@ -1687,9 +1808,9 @@ Box_exp2 <- ggplot(df_Rana_exp2, aes(x = Phase, y = Active_seconds, fill = Treat
 
 
 # Conditional model predictions
-pred_cond_exp2    <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+pred_cond_exp2    <- predict(zigam_21_exp2_int_adisPT_ziPT_ID_Rana, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities predictions
-pred_zi_exp2      <- predict(zigam_21_exp2_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp2      <- predict(zigam_21_exp2_int_adisPT_ziPT_ID_Rana, type = "zprob", se.fit = TRUE)
 
 
 df_pred_exp2 <- data.frame(
@@ -1790,9 +1911,9 @@ Box_exp1 <- ggplot(df_Rana_exp1, aes(x = Phase, y = Active_seconds, fill = Treat
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5))  # Rotate x-axis labels to 0 degrees (horizontal)
 
 # Conditional model predictions
-pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "conditional", se.fit = TRUE)
+pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "conditional", se.fit = TRUE)
 # Zero-inflation probabilities predictions
-pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID, type = "zprob", se.fit = TRUE)
+pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "zprob", se.fit = TRUE)
 
 df_pred_exp1 <- data.frame(
   Phase = df_Rana_exp1$Phase,
