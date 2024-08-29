@@ -656,11 +656,44 @@ summary(zigam_26_exp1_adisPT_ziPT_Ba_ID)
 summary(zigam_27_exp1_adisPT_ziPT_ID)
 summary(zigam_28_exp1_adisPT_ziPT)
 
+# P-Value correction
+p_values_conditional_exp1 <- c(0.000126, 0.001606 ,0.194760 ,0.641051 ,0.010214, 0.034062 ,0.006247 ,0.314353)
+p_values_zi_exp1 <- c(0.002887,0.064901 ,0.139756 ,0.026474 ,0.063732 ,0.014194 ,0.000269 ,2.74e-05 )
+treatments_exp1 <- c("BFT", "LN2", "MS222", "-20C", "24h", "65C", "95C", "Prot-K")
+
+
+# Apply multiple corrections
+adjusted_p_values_conditional_exp1 <- data.frame(
+  Treatment = treatments_exp1,
+  Original = p_values_conditional_exp1,
+  #Bonferroni = p.adjust(p_values_conditional, method = "bonferroni"),
+  #Holm = p.adjust(p_values_conditional, method = "holm"),
+  #Hochberg = p.adjust(p_values_conditional, method = "hochberg"),
+  #Hommel = p.adjust(p_values_conditional, method = "hommel"),
+  BH = round(p.adjust(p_values_conditional_exp1, method = "BH"), 3) # Benjamini-Hochberg
+  #BY = p.adjust(p_values_conditional, method = "BY"), # Benjamini-Yekutieli
+  #FDR = p.adjust(p_values_conditional, method = "fdr") # Equivalent to BH
+)
+
+adjusted_p_values_zi_exp1 <- data.frame(
+  Treatment = treatments_exp1,
+  Original = p_values_zi_exp1,
+  # Bonferroni = p.adjust(p_values_zi, method = "bonferroni"),
+  #Holm = p.adjust(p_values_zi, method = "holm"),
+  #Hochberg = p.adjust(p_values_zi, method = "hochberg"),
+  #Hommel = p.adjust(p_values_zi, method = "hommel"),
+  BH = round(p.adjust(p_values_zi_exp1, method = "BH"), 3) # Benjamini-Hochberg
+  #BY = p.adjust(p_values_zi, method = "BY"), # Benjamini-Yekutieli
+  #FDR = p.adjust(p_values_zi, method = "fdr") # Equivalent to BH
+)
+# Display the data frame of adjusted p-values
+print(adjusted_p_values_conditional_exp1)
+print(adjusted_p_values_zi_exp1)
+
+
 
 # ### Extracting values from the model to report ### ---------------------------------------
 # Extract coefficients
-
-
 
 ### 1st version ###
 
@@ -1256,6 +1289,44 @@ summary(zigam_25_exp2_mdisPT_ziPT)
 summary(zigam_26_exp2_adisPT_ziPT_Ba_ID)
 summary(zigam_27_exp2_adisPT_ziPT_ID)
 summary(zigam_28_exp2_adisPT_ziPT)
+
+
+# Example p-values
+p_values_conditional_exp2 <- c(0.001229,0.040910 ,0.000240, 0.004047, 0.001350, 0.737830 )
+p_values_zi_exp2 <- c(3.64e-09, 1.27e-05 ,0.00153 , 0.29580, 0.99221, 0.01340 )
+treatments_exp2 <- c("Arg.2", "Arg.02", "Arg.002", "ArgTric", "Tric.004", "Tric.0024")
+
+# Apply multiple corrections
+adjusted_p_values_conditional_exp2 <- data.frame(
+  Treatment = treatments_exp2,
+  Original = p_values_conditional_exp2,
+  #Bonferroni = p.adjust(p_values_conditional, method = "bonferroni"),
+  #Holm = p.adjust(p_values_conditional, method = "holm"),
+  #Hochberg = p.adjust(p_values_conditional, method = "hochberg"),
+  #Hommel = p.adjust(p_values_conditional, method = "hommel"),
+  BH = round(p.adjust(p_values_conditional_exp2, method = "BH"), 3) # Benjamini-Hochberg
+  #BY = p.adjust(p_values_conditional, method = "BY"), # Benjamini-Yekutieli
+  #FDR = p.adjust(p_values_conditional, method = "fdr") # Equivalent to BH
+)
+
+adjusted_p_values_zi_exp2 <- data.frame(
+  Treatment = treatments_exp2,
+  Original = p_values_zi_exp2,
+  # Bonferroni = p.adjust(p_values_zi, method = "bonferroni"),
+  #Holm = p.adjust(p_values_zi, method = "holm"),
+  #Hochberg = p.adjust(p_values_zi, method = "hochberg"),
+  #Hommel = p.adjust(p_values_zi, method = "hommel"),
+  BH = round(p.adjust(p_values_zi_exp2, method = "BH"), 3) # Benjamini-Hochberg
+  #BY = p.adjust(p_values_zi, method = "BY"), # Benjamini-Yekutieli
+  #FDR = p.adjust(p_values_zi, method = "fdr") # Equivalent to BH
+)
+# Display the data frame of adjusted p-values
+print(adjusted_p_values_conditional_exp2)
+print(adjusted_p_values_zi_exp2)
+
+
+
+
 
 
 # Estimated marginal means #
