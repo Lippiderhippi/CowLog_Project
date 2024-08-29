@@ -1594,6 +1594,39 @@ print(combined_plot)
 
 
 
+library(dplyr)
+
+# Generate predictions with error handling
+tryCatch({
+  pred_cond_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "conditional", se.fit = TRUE)
+  pred_zi_exp1 <- predict(zigam_21_exp1_int_adisPT_ziPT_ID_Rana, type = "zprob", se.fit = TRUE)
+}, error = function(e) {
+  stop("Prediction failed: ", e$message)
+})
+
+# Create a dataframe with individual predictions
+individual_pred_df <- data.frame(
+  Phase = df_Rana_exp1$Phase,
+  Treatment = df_Rana_exp1$Treatment,
+  Active_seconds = pred_cond_exp1$fit,  # Keep on log scale
+  Active_seconds_se = pred_cond_exp1$se.fit,  # Keep SE on log scale
+  ZeroInflation = pred_zi_exp1$fit,  # Assuming this is on the probability scale
+  ZeroInflation_se = pred_zi_exp1$se.fit
+)
+
+# Calculate mean and standard deviation for each Phase within each Treatment
+summary_pred_df <- individual_pred_df %>%
+  group_by(Phase, Treatment) %>%
+  summarize(
+    Mean_Active_seconds = mean(Active_seconds, na.rm = TRUE),
+    SD_Active_seconds = sd(Active_seconds, na.rm = TRUE),
+    Mean_ZeroInflation = mean(ZeroInflation, na.rm = TRUE),
+    SD_ZeroInflation = sd(ZeroInflation, na.rm = TRUE)
+  )
+
+# Print all rows of the summarized dataframe with mean and standard deviation
+print(summary_pred_df, n = Inf)
+
 
 
 ### Plot the Marginal Effects ###########################################
